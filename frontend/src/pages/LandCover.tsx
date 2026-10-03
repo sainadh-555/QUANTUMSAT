@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { trainClassification } from '../services/api';
 import { Play } from 'lucide-react';
 

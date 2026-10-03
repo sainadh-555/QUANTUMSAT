@@ -1,6 +1,3 @@
-import React from 'react';
-import { Focus } from 'lucide-react';
-
 const ChangeDetection = () => {
   return (
     <div className="space-y-6">

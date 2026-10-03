@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getSystemStatus } from '../services/api';
 import { Database, Server, Cpu } from 'lucide-react';
 

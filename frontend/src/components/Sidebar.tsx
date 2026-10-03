@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Globe, Focus, FlaskConical, GitCompare, History, BookOpen, Settings } from 'lucide-react';
 
