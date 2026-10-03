@@ -1,46 +1,44 @@
 import { useEffect, useState } from 'react';
-import { Bot, Wifi, WifiOff } from 'lucide-react';
-import { getSystemStatus } from '../services/api';
+import { Bot, Wifi, WifiOff, Loader2 } from 'lucide-react';
+import { getHealth } from '../services/api';
 
 interface HeaderProps {
   toggleCopilot: () => void;
   copilotOpen: boolean;
 }
 
+type ConnectionState = 'Connecting' | 'Connected' | 'Disconnected';
+
 const Header = ({ toggleCopilot, copilotOpen }: HeaderProps) => {
-  const [backendStatus, setBackendStatus] = useState<'Connecting' | 'Connected' | 'Disconnected' | 'Error'>('Connecting');
+  const [conn, setConn] = useState<ConnectionState>('Connecting');
 
   useEffect(() => {
-    getSystemStatus()
-      .then((res) => {
-        if (res?.status === 'ok') setBackendStatus('Connected');
-        else setBackendStatus('Error');
-      })
-      .catch(() => setBackendStatus('Disconnected'));
+    getHealth()
+      .then(() => setConn('Connected'))
+      .catch(() => setConn('Disconnected'));
   }, []);
 
   return (
-    <header className="h-14 bg-surface border-b border-surfaceHover flex items-center justify-between px-6 shrink-0">
-      <div className="text-sm font-medium text-textMain flex items-center">
-        Workspace Context
-      </div>
-      
-      <div className="flex items-center space-x-6">
-        <div className="flex items-center text-xs">
-          {backendStatus === 'Connected' ? (
-            <><Wifi className="w-3 h-3 text-accentGreen mr-1.5" /> <span className="text-textMuted">Connected</span></>
-          ) : backendStatus === 'Connecting' ? (
-            <><Wifi className="w-3 h-3 text-yellow-500 mr-1.5 animate-pulse" /> <span className="text-textMuted">Connecting...</span></>
-          ) : (
-            <><WifiOff className="w-3 h-3 text-red-500 mr-1.5" /> <span className="text-red-400">Disconnected</span></>
-          )}
+    <header className="h-12 bg-surface border-b border-border flex items-center justify-between px-4 shrink-0">
+      <div className="text-xs text-textMuted">Quantum-Enhanced Earth Observation Analysis</div>
+      <div className="flex items-center gap-4">
+        {/* Connection status */}
+        <div className="flex items-center gap-1.5 text-xs">
+          {conn === 'Connected' && <><Wifi className="w-3 h-3 text-accent" /><span className="text-textMuted">Connected</span></>}
+          {conn === 'Connecting' && <><Loader2 className="w-3 h-3 text-warning animate-spin" /><span className="text-textMuted">Connecting</span></>}
+          {conn === 'Disconnected' && <><WifiOff className="w-3 h-3 text-danger" /><span className="text-danger">Disconnected</span></>}
         </div>
-        
-        <button 
+
+        {/* Copilot toggle */}
+        <button
           onClick={toggleCopilot}
-          className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors border ${copilotOpen ? 'bg-primary/20 text-primary border-primary/50' : 'bg-surfaceHover text-textMain border-transparent hover:border-surfaceHover hover:bg-surfaceHover/80'}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors border ${
+            copilotOpen
+              ? 'bg-primary/15 text-primary border-primary/30'
+              : 'text-textMuted border-border hover:text-textMain hover:bg-surfaceHover'
+          }`}
         >
-          <Bot className="w-4 h-4 mr-2" />
+          <Bot className="w-3.5 h-3.5" />
           Terra Copilot
         </button>
       </div>

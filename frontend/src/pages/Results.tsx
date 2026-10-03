@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getExperiments } from '../services/api';
-import { Database, Clock, Activity, HardDrive } from 'lucide-react';
+import { BarChart3, Loader2, AlertCircle } from 'lucide-react';
 
 const Results = () => {
   const [experiments, setExperiments] = useState<any[]>([]);
@@ -9,70 +9,61 @@ const Results = () => {
 
   useEffect(() => {
     getExperiments()
-      .then((data) => {
-        setExperiments(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError(true);
-        setLoading(false);
-      });
+      .then(data => { setExperiments(data); setLoading(false); })
+      .catch(() => { setError(true); setLoading(false); });
   }, []);
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Experiment Results</h2>
-        <button className="text-sm bg-surfaceHover px-3 py-1.5 rounded-md hover:text-primary transition-colors border border-transparent hover:border-surfaceHover">
-          Export to CSV
-        </button>
+    <div className="p-6 overflow-y-auto h-full max-w-5xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-semibold">Experiment Results</h2>
       </div>
 
-      {loading ? (
-        <div className="text-textMuted text-sm text-center py-12">Loading experiment records...</div>
-      ) : error ? (
-        <div className="bg-red-900/20 border border-red-500/50 p-6 rounded-lg text-center">
-          <p className="text-red-400">Failed to connect to backend to retrieve results.</p>
+      {loading && (
+        <div className="flex items-center justify-center h-48 text-textMuted">
+          <Loader2 className="w-5 h-5 animate-spin mr-2" />
+          Loading experiments…
         </div>
-      ) : experiments.length === 0 ? (
-        <div className="bg-surface p-12 rounded-lg border border-surfaceHover text-center">
-          <HardDrive className="w-12 h-12 text-textMuted mx-auto mb-4 opacity-50" />
-          <h3 className="text-lg font-medium text-textMain mb-2">No Experiments Found</h3>
-          <p className="text-sm text-textMuted max-w-md mx-auto">
-            You haven't run any classical or quantum analyses yet. 
-            Navigate to Land-Cover Analysis or Quantum Analysis to start a training run.
-          </p>
+      )}
+
+      {error && (
+        <div className="flex items-start gap-3 p-4 bg-danger/10 border border-danger/30 rounded">
+          <AlertCircle className="w-4 h-4 text-danger shrink-0 mt-0.5" />
+          <div className="text-sm text-danger">Failed to load experiments from backend.</div>
         </div>
-      ) : (
-        <div className="space-y-4">
+      )}
+
+      {!loading && !error && experiments.length === 0 && (
+        <div className="flex flex-col items-center justify-center h-48 text-textMuted">
+          <BarChart3 className="w-10 h-10 opacity-15 mb-3" />
+          <p className="text-sm">No experiments have been run yet.</p>
+          <p className="text-xs mt-1">Navigate to Land-Cover Analysis or Quantum Analysis to generate real results.</p>
+        </div>
+      )}
+
+      {experiments.length > 0 && (
+        <div className="space-y-3">
           {experiments.map((exp: any) => (
-            <div key={exp.experiment_id} className="bg-surface p-5 rounded-lg border border-surfaceHover shadow-sm hover:border-primary/50 transition-colors">
-              <div className="flex justify-between items-start mb-4">
+            <div key={exp.experiment_id} className="bg-surface border border-border rounded p-4 hover:border-primary/40 transition-colors">
+              <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h3 className="font-semibold text-lg text-textMain">{exp.module} Run</h3>
-                  <div className="text-xs font-mono text-textMuted mt-1">ID: {exp.experiment_id}</div>
+                  <div className="text-sm font-semibold">{exp.module}</div>
+                  <div className="text-[10px] font-mono text-textMuted mt-0.5">{exp.experiment_id} · {exp.timestamp?.split('T')[0]}</div>
                 </div>
-                <span className="px-2.5 py-1 text-xs font-medium bg-primary/20 text-primary rounded border border-primary/30">
+                <span className="px-2 py-0.5 text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 rounded">
                   {exp.model_type}
                 </span>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center text-sm">
-                  <Activity className="w-4 h-4 mr-2 text-accentGreen" />
-                  <span className="text-textMuted w-20">Accuracy:</span>
-                  <span className="font-medium">{(exp.metrics?.accuracy * 100).toFixed(1)}%</span>
-                </div>
-                <div className="flex items-center text-sm">
-                  <Clock className="w-4 h-4 mr-2 text-accentCyan" />
-                  <span className="text-textMuted w-20">Runtime:</span>
-                  <span className="font-medium">{exp.runtime_seconds ? `${exp.runtime_seconds}s` : 'Unknown'}</span>
-                </div>
-                <div className="flex items-center text-sm">
-                  <Database className="w-4 h-4 mr-2 text-secondary" />
-                  <span className="text-textMuted w-20">Samples:</span>
-                  <span className="font-medium">{exp.config?.samples || 'N/A'} per class</span>
-                </div>
+              <div className="flex gap-6 text-xs text-textMuted">
+                {exp.metrics?.accuracy != null && (
+                  <span>Accuracy: <span className="text-textMain font-medium">{(exp.metrics.accuracy * 100).toFixed(1)}%</span></span>
+                )}
+                {exp.metrics?.macro_f1 != null && (
+                  <span>F1: <span className="text-textMain font-medium">{(exp.metrics.macro_f1 * 100).toFixed(1)}%</span></span>
+                )}
+                {exp.runtime_seconds != null && (
+                  <span>Runtime: <span className="text-textMain font-medium">{exp.runtime_seconds}s</span></span>
+                )}
               </div>
             </div>
           ))}

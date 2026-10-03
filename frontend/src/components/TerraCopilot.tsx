@@ -1,80 +1,142 @@
 import { useState } from 'react';
-import { X, Send, Bot, Database } from 'lucide-react';
+import { askCopilot } from '../services/api';
+import { X, Send, Bot, Loader2, ExternalLink } from 'lucide-react';
+
+interface Message {
+  role: 'user' | 'ai';
+  content: string;
+  source?: string;
+  experiment_id?: string;
+}
+
+const SUGGESTIONS = [
+  'What land-cover class was detected?',
+  'Explain the quantum kernel used.',
+  'What changed between these images?',
+  'What are the limitations of this analysis?',
+  'Describe the EuroSAT dataset.',
+  'Explain the features used for predictions.',
+];
 
 const TerraCopilot = ({ onClose }: { onClose: () => void }) => {
   const [query, setQuery] = useState('');
-  const [messages, setMessages] = useState<{role: 'user'|'ai', content: string}[]>([
-    { role: 'ai', content: 'I am Terra Copilot. I can answer questions grounded in the loaded datasets, analysis results, and validated Qiskit quantum experiments.' }
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: 'ai',
+      content: 'I am Terra Copilot — a dataset-grounded assistant for this project. I answer questions using loaded datasets, analysis results, and verified project documentation. Ask me about classifications, quantum experiments, change detection, or the EuroSAT dataset.',
+      source: 'system',
+    },
   ]);
   const [loading, setLoading] = useState(false);
 
-  const handleSend = () => {
-    if (!query.trim()) return;
-    const newMessages = [...messages, { role: 'user' as const, content: query }];
-    setMessages(newMessages);
+  const handleSend = async () => {
+    const q = query.trim();
+    if (!q || loading) return;
+    const userMsg: Message = { role: 'user', content: q };
+    setMessages(prev => [...prev, userMsg]);
     setQuery('');
     setLoading(true);
 
-    // Mock retrieval for now
-    setTimeout(() => {
-      setMessages([...newMessages, { 
-        role: 'ai', 
-        content: "I cannot verify that from the datasets or analysis results currently available. Load the relevant dataset or run the required analysis first." 
-      }]);
-      setLoading(false);
-    }, 1000);
+    try {
+      const res = await askCopilot(q);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'ai',
+          content: res.answer,
+          source: res.source,
+          experiment_id: res.experiment_id,
+        },
+      ]);
+    } catch {
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'ai',
+          content: 'Failed to reach the backend. The API may be disconnected or starting up.',
+          source: 'error',
+        },
+      ]);
+    }
+    setLoading(false);
+  };
+
+  const sourceLabel = (s?: string) => {
+    if (!s || s === 'none') return null;
+    const labels: Record<string, string> = {
+      experiment_record: 'Experiment Record',
+      dataset_metadata: 'Dataset Metadata',
+      project_documentation: 'Project Documentation',
+      system: 'System',
+      error: 'Error',
+    };
+    return labels[s] || s;
   };
 
   return (
-    <div className="flex flex-col h-full bg-surface">
-      <div className="p-4 border-b border-surfaceHover flex items-center justify-between shrink-0">
-        <div className="flex items-center">
-          <Bot className="w-5 h-5 text-primary mr-2" />
-          <h3 className="font-semibold text-textMain">Terra Copilot</h3>
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+        <div className="flex items-center gap-2">
+          <Bot className="w-4 h-4 text-primary" />
+          <span className="text-sm font-semibold">Terra Copilot</span>
         </div>
         <button onClick={onClose} className="text-textMuted hover:text-textMain"><X className="w-4 h-4" /></button>
       </div>
-      
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((msg, i) => (
           <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-            <div className={`text-sm p-3 rounded-lg max-w-[90%] ${msg.role === 'user' ? 'bg-primary/20 text-textMain border border-primary/30' : 'bg-background border border-surfaceHover text-textMuted'}`}>
+            <div
+              className={`text-[13px] leading-relaxed p-3 rounded-lg max-w-[92%] ${
+                msg.role === 'user'
+                  ? 'bg-primary/15 text-textMain border border-primary/20'
+                  : 'bg-background text-textMuted border border-border'
+              }`}
+            >
               {msg.content}
             </div>
-            {msg.role === 'ai' && i > 0 && (
-              <div className="flex items-center text-[10px] text-accentCyan mt-1 ml-1 opacity-70">
-                <Database className="w-3 h-3 mr-1" />
-                No grounded context found
+            {msg.role === 'ai' && msg.source && sourceLabel(msg.source) && (
+              <div className="flex items-center gap-1 text-[9px] text-accentCyan mt-1 ml-1 opacity-80">
+                <ExternalLink className="w-2.5 h-2.5" />
+                Source: {sourceLabel(msg.source)}
+                {msg.experiment_id && <span className="font-mono"> ({msg.experiment_id})</span>}
               </div>
             )}
           </div>
         ))}
         {loading && (
-          <div className="text-xs text-textMuted flex items-center italic">
-            <Bot className="w-3 h-3 mr-2 animate-pulse" />
-            Searching dataset contexts...
+          <div className="flex items-center gap-2 text-xs text-textMuted italic">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            Searching available context…
           </div>
         )}
       </div>
 
-      <div className="p-4 border-t border-surfaceHover shrink-0 bg-background/50">
-        <div className="flex flex-wrap gap-2 mb-3">
-          <span onClick={() => setQuery("What land-cover class was detected?")} className="text-[10px] bg-surfaceHover px-2 py-1 rounded cursor-pointer hover:bg-primary/20 hover:text-primary transition-colors text-textMuted">What was detected?</span>
-          <span onClick={() => setQuery("Explain the quantum kernel used.")} className="text-[10px] bg-surfaceHover px-2 py-1 rounded cursor-pointer hover:bg-primary/20 hover:text-primary transition-colors text-textMuted">Explain quantum kernel</span>
+      <div className="p-3 border-t border-border shrink-0">
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {SUGGESTIONS.slice(0, 3).map(s => (
+            <button
+              key={s}
+              onClick={() => { setQuery(s); }}
+              className="text-[10px] bg-surfaceHover px-2 py-1 rounded text-textMuted hover:text-primary hover:bg-primary/10 transition-colors"
+            >
+              {s}
+            </button>
+          ))}
         </div>
         <div className="relative">
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Ask Terra Copilot..." 
-            className="w-full bg-surface border border-surfaceHover rounded-md pl-3 pr-10 py-2 text-sm text-textMain focus:outline-none focus:border-primary placeholder:text-surfaceHover"
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSend()}
+            placeholder="Ask about datasets, results, or methods…"
+            className="w-full bg-background border border-border rounded pl-3 pr-9 py-2 text-sm text-textMain focus:outline-none focus:border-primary placeholder:text-textMuted/40"
           />
-          <button 
+          <button
             onClick={handleSend}
             disabled={!query.trim() || loading}
-            className="absolute right-2 top-2 text-primary hover:text-blue-400 disabled:opacity-30 disabled:hover:text-primary"
+            className="absolute right-2 top-2 text-primary disabled:opacity-30"
           >
             <Send className="w-4 h-4" />
           </button>

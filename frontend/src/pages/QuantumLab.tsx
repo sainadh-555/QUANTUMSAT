@@ -1,79 +1,195 @@
-import { Cpu, Terminal, ShieldAlert } from 'lucide-react';
+import { useState } from 'react';
+import { trainQuantum } from '../services/api';
+import { Atom, Play, Loader2, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 const QuantumLab = () => {
+  const [qubits] = useState(4);
+  const [reps, setReps] = useState(1);
+  const [entanglement, setEntanglement] = useState('linear');
+  const [samples, setSamples] = useState(15);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleRun = async () => {
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      const fd = new FormData();
+      fd.append('classes', 'AnnualCrop,Forest,Residential,River');
+      fd.append('samples_per_class', String(samples));
+      fd.append('qubits', String(qubits));
+      fd.append('reps', String(reps));
+      fd.append('entanglement', entanglement);
+      const res = await trainQuantum(fd);
+      setResult(res);
+    } catch (e: any) {
+      setError(e?.response?.data?.detail || e.message || 'Quantum experiment failed');
+    }
+    setLoading(false);
+  };
+
   return (
-    <div className="space-y-6 max-w-6xl mx-auto h-full flex flex-col">
-      <div className="flex items-center justify-between shrink-0">
-        <h2 className="text-xl font-bold tracking-wide">Quantum Analysis</h2>
-        <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded border border-primary/20">
-          Qiskit Aer Simulator
-        </span>
-      </div>
-      
-      <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
-        {/* Left: Circuit Config */}
-        <div className="col-span-1 bg-surface border border-surfaceHover rounded-lg p-5 flex flex-col overflow-y-auto">
-          <div className="flex items-center mb-6 text-textMain border-b border-surfaceHover pb-3">
-            <Cpu className="w-4 h-4 mr-2 text-primary" />
-            <h3 className="font-semibold">Circuit Configuration</h3>
+    <div className="flex h-full min-h-0">
+      {/* Config */}
+      <div className="w-72 bg-surface border-r border-border p-4 flex flex-col shrink-0 overflow-y-auto">
+        <div className="flex items-center gap-2 mb-5 pb-3 border-b border-border">
+          <Atom className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold">Circuit Configuration</h3>
+        </div>
+
+        <label className="text-xs text-textMuted mb-1.5">Feature Map</label>
+        <select className="bg-background border border-border rounded px-2.5 py-1.5 text-sm text-textMain mb-4 focus:outline-none focus:border-primary">
+          <option>ZZFeatureMap</option>
+        </select>
+
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label className="text-xs text-textMuted mb-1.5 block">Qubits</label>
+            <input type="number" value={qubits} disabled className="w-full bg-background border border-border rounded px-2.5 py-1.5 text-sm text-textMuted opacity-60" />
+            <div className="text-[9px] text-textMuted mt-1">Fixed to feature count</div>
           </div>
-          
+          <div>
+            <label className="text-xs text-textMuted mb-1.5 block">Repetitions</label>
+            <input
+              type="number"
+              min={1}
+              max={4}
+              value={reps}
+              onChange={e => setReps(Number(e.target.value))}
+              className="w-full bg-background border border-border rounded px-2.5 py-1.5 text-sm text-textMain focus:outline-none focus:border-primary"
+            />
+          </div>
+        </div>
+
+        <label className="text-xs text-textMuted mb-1.5">Entanglement</label>
+        <select
+          value={entanglement}
+          onChange={e => setEntanglement(e.target.value)}
+          className="bg-background border border-border rounded px-2.5 py-1.5 text-sm text-textMain mb-4 focus:outline-none focus:border-primary"
+        >
+          <option value="linear">Linear</option>
+          <option value="full">Full</option>
+          <option value="circular">Circular</option>
+        </select>
+
+        <label className="text-xs text-textMuted mb-1.5">Samples per class</label>
+        <input
+          type="number"
+          min={5}
+          max={30}
+          value={samples}
+          onChange={e => setSamples(Number(e.target.value))}
+          className="bg-background border border-border rounded px-2.5 py-1.5 text-sm text-textMain mb-4 focus:outline-none focus:border-primary"
+        />
+        <div className="text-[9px] text-textMuted mb-4">Bounded to ≤30 for simulator feasibility.</div>
+
+        <div className="p-3 bg-warning/10 border border-warning/20 rounded mb-4 text-xs text-warning flex items-start gap-2">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span>Execution uses the local Aer Simulator. IBM Quantum hardware requires a configured token and explicit confirmation.</span>
+        </div>
+
+        <button
+          onClick={handleRun}
+          disabled={loading}
+          className="flex items-center justify-center gap-2 w-full px-3 py-2 bg-primary hover:bg-primary/90 text-white rounded text-sm font-medium transition-colors disabled:opacity-50 mt-auto"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+          {loading ? 'Executing…' : 'Run Quantum Experiment'}
+        </button>
+      </div>
+
+      {/* Output */}
+      <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex items-center gap-2 mb-6">
+          <Atom className="w-4 h-4 text-accentCyan" />
+          <h2 className="text-lg font-semibold">Quantum Kernel Output</h2>
+        </div>
+
+        {error && (
+          <div className="flex items-start gap-3 p-4 bg-danger/10 border border-danger/30 rounded mb-4">
+            <AlertCircle className="w-4 h-4 text-danger shrink-0 mt-0.5" />
+            <div>
+              <div className="text-sm font-medium text-danger">Experiment Failed</div>
+              <div className="text-xs text-textMuted mt-1">{error}</div>
+              <button onClick={handleRun} className="text-xs text-primary mt-2 hover:underline">Retry</button>
+            </div>
+          </div>
+        )}
+
+        {!result && !loading && !error && (
+          <div className="flex flex-col items-center justify-center h-64 text-textMuted">
+            <Atom className="w-10 h-10 opacity-15 mb-3" />
+            <p className="text-sm">Configure the quantum circuit and run an experiment.</p>
+            <p className="text-xs mt-1">The EuroSAT dataset must be available on the backend.</p>
+          </div>
+        )}
+
+        {loading && (
+          <div className="flex flex-col items-center justify-center h-64 text-primary">
+            <Loader2 className="w-8 h-8 animate-spin mb-3" />
+            <p className="text-sm">Building quantum kernel matrix…</p>
+            <p className="text-xs text-textMuted mt-1">This may take 30–120 seconds depending on sample size.</p>
+          </div>
+        )}
+
+        {result && (
           <div className="space-y-5">
-            <div>
-              <label className="block text-xs font-medium text-textMuted mb-2">Feature Map</label>
-              <select className="w-full bg-background border border-surfaceHover rounded-md px-3 py-2 text-sm text-textMain focus:border-primary focus:outline-none">
-                <option>ZZFeatureMap</option>
-                <option>ZFeatureMap</option>
-                <option>PauliFeatureMap</option>
-              </select>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-start gap-3 p-4 bg-accent/10 border border-accent/30 rounded">
+              <CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" />
               <div>
-                <label className="block text-xs font-medium text-textMuted mb-2">Qubits</label>
-                <input type="number" defaultValue={4} disabled className="w-full bg-background border border-surfaceHover rounded-md px-3 py-2 text-sm text-textMuted opacity-70" />
-                <p className="text-[10px] text-textMuted mt-1 mt-1">Locked to feature count</p>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-textMuted mb-2">Repetitions</label>
-                <input type="number" defaultValue={2} className="w-full bg-background border border-surfaceHover rounded-md px-3 py-2 text-sm text-textMain focus:border-primary focus:outline-none" />
+                <div className="text-sm font-medium text-accent">Quantum Experiment Complete</div>
+                <div className="text-[10px] text-textMuted font-mono mt-1">ID: {result.experiment_id} · {result.runtime_seconds}s</div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-textMuted mb-2">Entanglement</label>
-              <select className="w-full bg-background border border-surfaceHover rounded-md px-3 py-2 text-sm text-textMain focus:border-primary focus:outline-none">
-                <option>Linear</option>
-                <option>Full</option>
-                <option>Circular</option>
-              </select>
+            <div className="grid grid-cols-4 gap-3">
+              {[
+                { label: 'Accuracy', value: `${(result.metrics.accuracy * 100).toFixed(1)}%` },
+                { label: 'Macro F1', value: `${(result.metrics.macro_f1 * 100).toFixed(1)}%` },
+                { label: 'Circuit Depth', value: result.circuit?.depth || '-' },
+                { label: 'Qubits', value: result.circuit?.width || '-' },
+              ].map(m => (
+                <div key={m.label} className="bg-background border border-border rounded p-3 text-center">
+                  <div className="text-lg font-bold">{m.value}</div>
+                  <div className="text-[10px] text-textMuted mt-0.5">{m.label}</div>
+                </div>
+              ))}
             </div>
 
-            <div className="p-3 bg-amber-900/10 border border-amber-500/20 rounded-md">
-              <div className="flex items-start">
-                <ShieldAlert className="w-4 h-4 text-amber-500 mr-2 shrink-0 mt-0.5" />
-                <div className="text-xs text-amber-500/90 leading-relaxed">
-                  Execution is bounded to the local Aer Simulator to prevent API token exhaustion. Explicit IBM Quantum hardware execution requires a configured token.
+            <div className="bg-background border border-border rounded p-4">
+              <h4 className="text-xs font-semibold text-textMuted mb-2">Circuit Metadata</h4>
+              <div className="text-xs space-y-1 text-textMuted">
+                <div>Feature Map: <span className="text-textMain">{result.circuit?.feature_map}</span></div>
+                <div>Repetitions: <span className="text-textMain">{result.circuit?.reps}</span></div>
+                <div>Entanglement: <span className="text-textMain">{result.circuit?.entanglement}</span></div>
+                <div>Backend: <span className="text-textMain">Aer Simulator (local, noiseless)</span></div>
+              </div>
+            </div>
+
+            {result.metrics.confusion_matrix && (
+              <div>
+                <h4 className="text-xs font-semibold text-textMuted mb-2">Confusion Matrix</h4>
+                <div className="overflow-x-auto">
+                  <table className="text-xs border-collapse">
+                    <thead><tr><th className="p-1.5"></th>{['Crop', 'Forest', 'Resid.', 'River'].map(c => <th key={c} className="p-1.5 text-textMuted">{c}</th>)}</tr></thead>
+                    <tbody>
+                      {result.metrics.confusion_matrix.map((row: number[], i: number) => (
+                        <tr key={i}>
+                          <td className="p-1.5 text-textMuted font-medium">{['Crop', 'Forest', 'Resid.', 'River'][i]}</td>
+                          {row.map((v: number, j: number) => (
+                            <td key={j} className={`p-1.5 text-center border border-border ${i === j ? 'bg-accent/15 text-accent font-bold' : 'bg-background text-textMuted'}`}>{v}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            </div>
+            )}
           </div>
-        </div>
-
-        {/* Right: Quantum Execution Output */}
-        <div className="col-span-2 bg-surface border border-surfaceHover rounded-lg p-5 flex flex-col relative overflow-hidden">
-          <div className="flex items-center mb-6 text-textMain border-b border-surfaceHover pb-3">
-            <Terminal className="w-4 h-4 mr-2 text-accentCyan" />
-            <h3 className="font-semibold">Kernel Execution Matrix</h3>
-          </div>
-          
-          <div className="flex-1 bg-background border border-surfaceHover rounded-lg flex items-center justify-center font-mono text-xs text-textMuted">
-            <div className="text-center">
-              <p className="mb-2 opacity-50">No circuit loaded.</p>
-              <p className="opacity-50">Select a dataset in Land-Cover Analysis to generate the quantum kernel.</p>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

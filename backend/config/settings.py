@@ -1,21 +1,21 @@
 import os
 from pathlib import Path
 
-# Fix paths for the moved files
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 MODELS_DIR = BASE_DIR / "models"
 RESULTS_DIR = BASE_DIR / "results"
+SAMPLE_DIR = BASE_DIR / "sample_data"
 
-for d in [DATA_DIR, MODELS_DIR, RESULTS_DIR]:
+for d in [DATA_DIR, MODELS_DIR, RESULTS_DIR, SAMPLE_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
-EUROSAT_DIR = Path(os.getenv("EUROSAT_DIR", DATA_DIR / "EuroSAT" / "2750"))
-OSCD_DIR = Path(os.getenv("OSCD_DIR", DATA_DIR / "OSCD"))
+EUROSAT_DIR = Path(os.getenv("EUROSAT_DIR", str(DATA_DIR / "EuroSAT" / "2750")))
+OSCD_DIR = Path(os.getenv("OSCD_DIR", str(DATA_DIR / "OSCD")))
 
 AVAILABLE_CLASSES = [
-    "AnnualCrop", "Forest", "HerbaceousVegetation", "Highway", 
-    "Industrial", "Pasture", "PermanentCrop", "Residential", 
+    "AnnualCrop", "Forest", "HerbaceousVegetation", "Highway",
+    "Industrial", "Pasture", "PermanentCrop", "Residential",
     "River", "SeaLake"
 ]
 

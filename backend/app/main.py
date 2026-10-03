@@ -1,17 +1,29 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.api import endpoints
+import os
 
 app = FastAPI(
-    title="Quantum Earth Intelligence API",
-    description="Backend API for Quantum-Enhanced Earth Observation Analysis",
-    version="1.0.0"
+    title="Terra Quantum API",
+    description="Backend API for Quantum-Enhanced Earth Observation Analysis (VNQFF-09)",
+    version="2.0.0",
 )
 
-# Configure CORS
+# CORS — allow the GitHub Pages frontend and localhost dev
+allowed_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://sainadh-555.github.io",
+]
+# Allow all in dev; in production the env var can restrict this
+cors_origins = os.getenv("CORS_ORIGINS", "*")
+if cors_origins == "*":
+    allowed_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -19,6 +31,12 @@ app.add_middleware(
 
 app.include_router(endpoints.router, prefix="/api")
 
+
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to Quantum Earth Intelligence API"}
+    return {
+        "name": "Terra Quantum API",
+        "project": "VNQFF-09",
+        "version": "2.0.0",
+        "docs": "/docs",
+    }
