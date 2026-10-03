@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Send, Bot, FileText, Database } from 'lucide-react';
+import { X, Send, Bot, Database } from 'lucide-react';
 
 const TerraCopilot = ({ onClose }: { onClose: () => void }) => {
   const [query, setQuery] = useState('');
