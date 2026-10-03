@@ -1,12 +1,29 @@
-# QUANTUM EARTH INTELLIGENCE
+# TERRA QUANTUM — AI + Quantum Earth Intelligence
 
-**Project ID**: VNQFF-09
+**Project ID**: VNQFF-09  
+**Problem Statement**: Quantum-Enhanced Earth Observation Analysis
 
-A professional, quantum-enhanced earth observation analysis platform combining React, FastAPI, and Qiskit.
+A professional geospatial intelligence platform combining classical machine learning, Qiskit quantum kernel experiments, satellite image analysis, and a grounded AI copilot.
 
 ## Architecture
-- **Frontend**: React, Vite, TailwindCSS (deployed via GitHub Pages)
-- **Backend**: Python, FastAPI, Qiskit, scikit-learn (deployed via Docker/Hugging Face Spaces)
+
+```
+Browser → React Frontend (GitHub Pages) → HTTPS → FastAPI Backend → Qiskit / scikit-learn
+```
+
+| Component | Technology | Deployment |
+|-----------|-----------|------------|
+| Frontend | React, TypeScript, Vite, Tailwind CSS | GitHub Pages |
+| Backend | Python, FastAPI, Qiskit, scikit-learn | Docker (HF Spaces / Render) |
+
+## Features
+
+- **Earth Explorer** — Satellite image workspace with dataset status and image upload
+- **Land-Cover Analysis** — Real SVM/Random Forest classification on EuroSAT with evaluation metrics
+- **Change Detection** — Before/after satellite image comparison with difference masks
+- **Quantum Analysis** — Genuine Qiskit ZZFeatureMap quantum kernel SVM experiments on local Aer Simulator
+- **Results** — Experiment history with real metrics only (no fabricated data)
+- **Terra Copilot** — Dataset-grounded retrieval assistant with source attribution
 
 ## Local Development
 
@@ -15,26 +32,50 @@ A professional, quantum-enhanced earth observation analysis platform combining R
 cd frontend
 npm install
 npm run dev
+# Opens at http://localhost:5173/QUANTUMSAT/
 ```
 
 ### Backend
 ```bash
 cd backend
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 7860
+# API docs at http://localhost:7860/docs
 ```
+
+### Environment Variables
+```
+VITE_API_BASE_URL=http://localhost:7860/api   # Frontend .env
+EUROSAT_DIR=./data/EuroSAT/2750              # Backend (optional)
+IBM_QUANTUM_TOKEN=                            # Backend (optional, for hardware)
+```
+
+## Dataset Setup
+
+Download **EuroSAT** (RGB version):
+- https://github.com/phelber/eurosat
+- Extract to `backend/data/EuroSAT/2750/`
+
+Download **OSCD** (optional, for change detection):
+- https://rcdaudt.github.io/oscd/
+- Extract to `backend/data/OSCD/`
 
 ## Deployment
 
-### Deploying Frontend (GitHub Pages)
-The frontend is automatically deployed to GitHub Pages via GitHub Actions when pushing to the `main` branch. See `.github/workflows/deploy.yml`.
+### Frontend (GitHub Pages)
+Automatically deployed via `.github/workflows/deploy.yml` on push to `main`.
 
-### Deploying Backend
-The backend can be deployed to any free service that supports Docker (e.g., Hugging Face Spaces, Render, Fly.io).
+### Backend (Docker)
+```bash
+cd backend
+docker build -t terra-quantum-api .
+docker run -p 7860:7860 terra-quantum-api
+```
 
-1. Connect your repository to the service.
-2. Select the `backend/Dockerfile` as the build source.
-3. Expose port `7860`.
-4. Update the frontend environment variable `VITE_API_BASE_URL` with your new backend URL and push to GitHub.
+After deploying the backend, set `VITE_API_BASE_URL` in your frontend build environment to the public backend URL.
