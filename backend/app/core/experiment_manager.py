@@ -1,7 +1,9 @@
 import uuid
 from datetime import datetime
-from src.persistence import ExperimentHistory
-from config.settings import DB_PATH
+from app.core.persistence import ExperimentHistory
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+from backend.config.settings import DB_PATH
 
 class ExperimentManager:
     def __init__(self):

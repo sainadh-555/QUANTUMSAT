@@ -1,44 +1,40 @@
 # QUANTUM EARTH INTELLIGENCE
 
 **Project ID**: VNQFF-09
-**Problem Statement**: Quantum-Enhanced Earth Observation Analysis
 
-This project explores the potential of quantum machine learning (QML) in earth observation tasks, specifically land-cover classification and satellite-image change detection. It integrates real satellite data (EuroSAT, OSCD), classical machine learning (SVM, Random Forest), and Qiskit-based quantum machine learning.
+A professional, quantum-enhanced earth observation analysis platform combining React, FastAPI, and Qiskit.
 
-## Features
-- **Land-Cover Classification**: Classical and Quantum-Kernel SVM on EuroSAT RGB dataset.
-- **Change Detection**: Analyzes pairs of satellite images using patch-based classical and quantum feature representations.
-- **Quantum Execution**: Run models on local simulators or submit jobs directly to IBM Quantum hardware.
-- **Evaluation Dashboard**: Compare model metrics (accuracy, F1-score, precision, recall) and execution times.
+## Architecture
+- **Frontend**: React, Vite, TailwindCSS (deployed via GitHub Pages)
+- **Backend**: Python, FastAPI, Qiskit, scikit-learn (deployed via Docker/Hugging Face Spaces)
 
-## Installation
+## Local Development
 
-### Prerequisites
-- Python 3.9+
-- Git
-
-### Setup
-1. Clone the repository and navigate to it:
-   ```bash
-   git clone <repo_url>
-   cd quantum-earth-intelligence
-   ```
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Copy `.env.example` to `.env` and adjust the paths if needed:
-   ```bash
-   cp .env.example .env
-   ```
-
-### Running the Application
-Start the Streamlit dashboard:
+### Frontend
 ```bash
-python -m streamlit run app.py
+cd frontend
+npm install
+npm run dev
 ```
+
+### Backend
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 7860
+```
+
+## Deployment
+
+### Deploying Frontend (GitHub Pages)
+The frontend is automatically deployed to GitHub Pages via GitHub Actions when pushing to the `main` branch. See `.github/workflows/deploy.yml`.
+
+### Deploying Backend
+The backend can be deployed to any free service that supports Docker (e.g., Hugging Face Spaces, Render, Fly.io).
+
+1. Connect your repository to the service.
+2. Select the `backend/Dockerfile` as the build source.
+3. Expose port `7860`.
+4. Update the frontend environment variable `VITE_API_BASE_URL` with your new backend URL and push to GitHub.

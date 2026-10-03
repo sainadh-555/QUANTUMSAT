@@ -1,5 +1,7 @@
 from pathlib import Path
-from config.settings import DEFAULT_CLASSES
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+from backend.config.settings import DEFAULT_CLASSES
 
 def validate_eurosat_dataset(dataset_path: Path):
     """
