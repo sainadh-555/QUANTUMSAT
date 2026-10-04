@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getSystemStatus } from '../services/api';
-import { Layers, Info, AlertTriangle, Upload, MapPin, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+import { getSystemStatus, searchCopernicus, fetchCopernicusImage } from '../services/api';
+import { Layers, Info, AlertTriangle, Upload, MapPin, ZoomIn, ZoomOut, Maximize, Search, Cloud, Calendar, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 const SAMPLE_IMG = import.meta.env.BASE_URL + 'sample.svg';
@@ -12,6 +12,18 @@ const EarthExplorer = () => {
   // Use the sample SVG as the default loaded image
   const [selectedImage, setSelectedImage] = useState<string>(SAMPLE_IMG);
   const [imageFile, setImageFile] = useState<File | null>(null);
+
+  // Copernicus Search State
+  const [bbox, setBbox] = useState('14.4,40.8,14.5,40.9');
+  const [dateStart, setDateStart] = useState('2023-05-01');
+  const [dateEnd, setDateEnd] = useState('2023-05-31');
+  const [cloudCover, setCloudCover] = useState(20);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  
+  // Copernicus Image Retrieval State
+  const [imgLoading, setImgLoading] = useState(false);
 
   useEffect(() => {
     getSystemStatus()
@@ -27,6 +39,40 @@ const EarthExplorer = () => {
       const url = URL.createObjectURL(file);
       setSelectedImage(url);
     }
+  };
+
+  const handleSearch = async () => {
+    setSearchLoading(true); setSearchError(''); setSearchResults([]);
+    try {
+      const fd = new FormData();
+      fd.append('bbox', bbox);
+      fd.append('date_start', dateStart);
+      fd.append('date_end', dateEnd);
+      fd.append('max_cloud_cover', String(cloudCover));
+      const res = await searchCopernicus(fd);
+      setSearchResults(res.results || []);
+      if (!res.results?.length) setSearchError('No imagery found for this criteria.');
+    } catch (e: any) {
+      setSearchError(e?.response?.data?.detail || e.message || 'Search failed');
+    }
+    setSearchLoading(false);
+  };
+
+  const handleLoadImage = async (date: string) => {
+    setImgLoading(true); setSearchError('');
+    try {
+      const fd = new FormData();
+      fd.append('bbox', bbox);
+      // Fetch specifically for that day
+      fd.append('date_start', date.split('T')[0]);
+      fd.append('date_end', date.split('T')[0]);
+      const res = await fetchCopernicusImage(fd);
+      setSelectedImage(`data:image/jpeg;base64,${res.image_b64}`);
+      setImageFile(new File([], `Sentinel2_${date.split('T')[0]}.jpg`, { type: 'image/jpeg' }));
+    } catch (e: any) {
+      setSearchError(e?.response?.data?.detail || e.message || 'Image retrieval failed');
+    }
+    setImgLoading(false);
   };
 
   const eurosat = status?.datasets?.eurosat;
@@ -79,7 +125,13 @@ const EarthExplorer = () => {
                   <button onClick={() => resetTransform()} className="p-2 hover:bg-background rounded text-textMain" title="Reset View"><Maximize className="w-4 h-4" /></button>
                 </div>
                 
-                <TransformComponent wrapperClass="!w-full !h-full" contentClass="!w-full !h-full flex items-center justify-center">
+                <TransformComponent wrapperClass="!w-full !h-full" contentClass="!w-full !h-full flex items-center justify-center relative">
+                  {imgLoading && (
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm text-white">
+                      <Loader2 className="w-10 h-10 animate-spin mb-3" />
+                      <div>Retrieving True-Color Imagery from CDSE...</div>
+                    </div>
+                  )}
                   <img
                     src={selectedImage}
                     alt="Satellite imagery"
@@ -119,24 +171,49 @@ const EarthExplorer = () => {
               </div>
             </div>
 
-            {/* Backend Dataset Info */}
-            <div className="space-y-2">
-              <h4 className="text-[10px] font-semibold text-textMuted uppercase tracking-wider">Backend Dataset</h4>
-              <div className="bg-background rounded p-2.5 border border-border">
-                <div className="text-textMuted mb-0.5">Dataset Status</div>
-                <div className={eurosat?.available ? 'text-accent' : 'text-warning'}>
-                  {eurosat?.available ? 'Loaded (EuroSAT)' : 'Not Installed'}
+            {/* Copernicus CDSE Panel */}
+            <div className="space-y-2 mt-6">
+              <h4 className="text-[10px] font-semibold text-textMuted uppercase tracking-wider flex items-center gap-1.5"><Search className="w-3 h-3" /> Copernicus Data Space</h4>
+              <div className="bg-background rounded p-2.5 border border-border space-y-3">
+                <div>
+                  <label className="text-[10px] text-textMuted block mb-1">Bounding Box (W,S,E,N)</label>
+                  <input type="text" value={bbox} onChange={e => setBbox(e.target.value)} className="w-full bg-surface border border-border rounded px-2 py-1 text-xs" />
                 </div>
-
-                <div className="text-textMuted mt-2 mb-0.5">Known Resolution</div>
-                <div className="text-textMain">{eurosat?.available ? '10 m/px (Sentinel-2)' : 'Unknown'}</div>
-
-                <div className="text-textMuted mt-2 mb-0.5">Patch Size</div>
-                <div className="text-textMain">{eurosat?.available ? '64 × 64 px' : 'Unknown'}</div>
-
-                <div className="text-textMuted mt-2 mb-0.5">Available Classes</div>
-                <div className="text-textMain">{eurosat?.available ? eurosat.classes.length : '0'}</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] text-textMuted block mb-1">Start Date</label>
+                    <input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)} className="w-full bg-surface border border-border rounded px-2 py-1 text-xs" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-textMuted block mb-1">End Date</label>
+                    <input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)} className="w-full bg-surface border border-border rounded px-2 py-1 text-xs" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] text-textMuted block mb-1">Max Cloud Cover (%)</label>
+                  <input type="number" max="100" min="0" value={cloudCover} onChange={e => setCloudCover(Number(e.target.value))} className="w-full bg-surface border border-border rounded px-2 py-1 text-xs" />
+                </div>
+                <button onClick={handleSearch} disabled={searchLoading} className="w-full py-1.5 bg-accent/20 text-accent rounded text-xs font-medium hover:bg-accent/30 transition-colors flex items-center justify-center gap-1.5">
+                  {searchLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />} Search Sentinel-2
+                </button>
+                {searchError && <div className="text-danger text-[10px] mt-1">{searchError}</div>}
               </div>
+
+              {/* Search Results */}
+              {searchResults.length > 0 && (
+                <div className="mt-3 space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {searchResults.map((res, idx) => (
+                    <div key={idx} className="bg-background border border-border rounded p-2 text-[10px] hover:border-primary/50 transition-colors cursor-pointer" onClick={() => handleLoadImage(res.date)}>
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-semibold text-textMain flex items-center gap-1"><Calendar className="w-3 h-3 text-primary" /> {res.date.split('T')[0]}</span>
+                        <span className="text-textMuted flex items-center gap-1"><Cloud className="w-3 h-3" /> {res.cloud_cover}%</span>
+                      </div>
+                      <div className="text-textMuted text-[9px] mb-1.5 truncate">{res.id}</div>
+                      <div className="text-primary flex items-center gap-1 font-medium"><ImageIcon className="w-3 h-3" /> Load Image</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

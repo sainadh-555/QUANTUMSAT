@@ -26,13 +26,21 @@ export const compareImages = (data: FormData) =>
   api.post('/change-detection/compare', data, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
 
 // ── Copilot ──
-export const askCopilot = (question: string) => {
+export const askCopilot = (question: string, context?: string) => {
   const fd = new FormData();
   fd.append('question', question);
+  if (context) fd.append('context', context);
   return api.post('/copilot/ask', fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
 };
 
 // ── Experiments ──
 export const getExperiments = () => api.get('/experiments').then(r => r.data);
+
+// ── Copernicus ──
+export const searchCopernicus = (data: FormData) =>
+  api.post('/copernicus/search', data, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
+
+export const fetchCopernicusImage = (data: FormData) =>
+  api.post('/copernicus/image', data, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
 
 export default api;

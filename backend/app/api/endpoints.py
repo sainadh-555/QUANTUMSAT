@@ -431,12 +431,23 @@ async def change_detection_compare(
 
 
 @router.post("/copilot/ask")
-async def copilot_ask(question: str = Form(...)):
+async def copilot_ask(
+    question: str = Form(...),
+    context: str = Form(None)
+):
     """
     Dataset-grounded retrieval assistant.
     Returns structured answers based on available datasets, experiments, and project documentation.
     """
     q = question.lower().strip()
+    
+    if context:
+        if any(kw in q for kw in ["predict", "result", "change", "what is this", "explain", "here"]):
+            return {
+                "answer": f"Based on your current workspace context: {context}\n\nThis explains the results you are seeing.",
+                "source": "ui_context"
+            }
+
     experiments = em.get_all_experiments()
     eurosat_valid, _, eurosat_classes = validate_eurosat_dataset(EUROSAT_DIR)
 
@@ -546,3 +557,33 @@ def get_experiment(experiment_id: str):
         if exp.get("experiment_id") == experiment_id:
             return exp
     raise HTTPException(status_code=404, detail="Experiment not found")
+
+
+@router.post("/copernicus/search")
+def copernicus_search(
+    bbox: str = Form(...),
+    date_start: str = Form(...),
+    date_end: str = Form(...),
+    max_cloud_cover: int = Form(20)
+):
+    try:
+        from app.core.copernicus import copernicus_service
+        bbox_list = [float(x.strip()) for x in bbox.split(",")]
+        results = copernicus_service.search_imagery(bbox_list, date_start, date_end, max_cloud_cover)
+        return {"status": "success", "results": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/copernicus/image")
+def copernicus_image(
+    bbox: str = Form(...),
+    date_start: str = Form(...),
+    date_end: str = Form(...)
+):
+    try:
+        from app.core.copernicus import copernicus_service
+        bbox_list = [float(x.strip()) for x in bbox.split(",")]
+        img_b64 = copernicus_service.fetch_true_color_image(bbox_list, date_start, date_end)
+        return {"status": "success", "image_b64": img_b64}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
