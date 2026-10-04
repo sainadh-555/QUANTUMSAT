@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { compareImages } from '../services/api';
-import { Upload, Loader2, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Upload, Loader2, AlertCircle, CheckCircle2, AlertTriangle, ArrowRightLeft } from 'lucide-react';
 
 const ChangeDetection = () => {
   const [img1, setImg1] = useState<{ file: File; url: string } | null>(null);
@@ -8,6 +8,7 @@ const ChangeDetection = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sliderPos, setSliderPos] = useState(50);
   const ref1 = useRef<HTMLInputElement>(null);
   const ref2 = useRef<HTMLInputElement>(null);
 
@@ -35,7 +36,10 @@ const ChangeDetection = () => {
 
   return (
     <div className="p-6 overflow-y-auto h-full">
-      <h2 className="text-lg font-semibold mb-5">Satellite Change Detection</h2>
+      <h2 className="text-lg font-semibold mb-5 flex items-center gap-2">
+        <ArrowRightLeft className="w-5 h-5 text-accentCyan" />
+        Satellite Change Detection
+      </h2>
 
       {/* Upload area */}
       <div className="grid grid-cols-2 gap-4 mb-5">
@@ -50,7 +54,7 @@ const ChangeDetection = () => {
             <>
               <Upload className="w-6 h-6 text-textMuted mb-2" />
               <div className="text-sm font-medium text-textMain">Time 1 — Reference</div>
-              <div className="text-xs text-textMuted mt-1">Click to upload pre-event image</div>
+              <div className="text-xs text-textMuted mt-1">Click to upload earlier image</div>
             </>
           )}
           <input ref={ref1} type="file" accept="image/*" onChange={e => handleFile(e, setImg1)} className="hidden" />
@@ -67,7 +71,7 @@ const ChangeDetection = () => {
             <>
               <Upload className="w-6 h-6 text-textMuted mb-2" />
               <div className="text-sm font-medium text-textMain">Time 2 — Analysis</div>
-              <div className="text-xs text-textMuted mt-1">Click to upload post-event image</div>
+              <div className="text-xs text-textMuted mt-1">Click to upload later image</div>
             </>
           )}
           <input ref={ref2} type="file" accept="image/*" onChange={e => handleFile(e, setImg2)} className="hidden" />
@@ -79,8 +83,8 @@ const ChangeDetection = () => {
         disabled={!img1 || !img2 || loading}
         className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded text-sm font-medium disabled:opacity-40 hover:bg-primary/90 transition-colors mb-5"
       >
-        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-        {loading ? 'Analysing…' : 'Generate Difference Mask'}
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRightLeft className="w-4 h-4" />}
+        {loading ? 'Analysing Difference…' : 'Generate Change Mask'}
       </button>
 
       {error && (
@@ -94,44 +98,81 @@ const ChangeDetection = () => {
         </div>
       )}
 
-      {result && (
-        <div className="space-y-4">
+      {result && img1 && img2 && (
+        <div className="space-y-6">
           <div className="flex items-start gap-3 p-4 bg-accent/10 border border-accent/30 rounded">
             <CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-            <div className="text-sm text-accent font-medium">Analysis Complete</div>
+            <div className="text-sm text-accent font-medium">Change Detection Complete</div>
           </div>
 
-          {/* Change map */}
-          <div className="bg-surface border border-border rounded p-4 text-center">
-            <h4 className="text-xs font-semibold text-textMuted mb-3">Detected Change Mask</h4>
-            <img
-              src={`data:image/png;base64,${result.change_map_b64}`}
-              alt="Change mask"
-              className="mx-auto border border-border"
-              style={{ imageRendering: 'pixelated', maxHeight: 300 }}
-            />
+          <div className="grid grid-cols-2 gap-6">
+            {/* Slider Comparison */}
+            <div className="bg-surface border border-border rounded p-4">
+              <h4 className="text-xs font-semibold text-textMuted mb-3 flex justify-between">
+                <span>Before</span>
+                <span>After</span>
+              </h4>
+              <div className="relative w-full aspect-square max-w-sm mx-auto overflow-hidden border border-border rounded select-none group">
+                <img src={img1.url} className="absolute inset-0 w-full h-full object-cover pointer-events-none" alt="Before" />
+                <img 
+                  src={img2.url} 
+                  className="absolute inset-0 w-full h-full object-cover pointer-events-none" 
+                  alt="After" 
+                  style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)` }} 
+                />
+                <div 
+                  className="absolute top-0 bottom-0 w-0.5 bg-accentCyan flex items-center justify-center pointer-events-none" 
+                  style={{ left: `${sliderPos}%` }}
+                >
+                  <div className="w-4 h-4 bg-accentCyan rounded-full shadow flex items-center justify-center">
+                    <div className="w-2 h-0.5 bg-background rotate-90" />
+                    <div className="w-2 h-0.5 bg-background absolute" />
+                  </div>
+                </div>
+                <input 
+                  type="range" 
+                  min="0" max="100" 
+                  value={sliderPos} 
+                  onChange={e => setSliderPos(Number(e.target.value))} 
+                  className="absolute inset-0 opacity-0 cursor-ew-resize w-full h-full z-10" 
+                />
+              </div>
+            </div>
+
+            {/* Difference Mask */}
+            <div className="bg-surface border border-border rounded p-4 text-center">
+              <h4 className="text-xs font-semibold text-textMuted mb-3">Detected Change Mask</h4>
+              <div className="relative w-full aspect-square max-w-sm mx-auto flex items-center justify-center bg-black rounded overflow-hidden">
+                <img
+                  src={`data:image/png;base64,${result.change_map_b64}`}
+                  alt="Change mask"
+                  className="max-w-full max-h-full object-contain"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Statistics */}
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-background border border-border rounded p-3 text-center">
-              <div className="text-lg font-bold">{result.statistics.change_percentage}%</div>
-              <div className="text-[10px] text-textMuted">Changed</div>
+              <div className="text-lg font-bold text-textMain">{result.statistics.change_percentage}%</div>
+              <div className="text-[10px] text-textMuted uppercase tracking-wider">Changed Area</div>
             </div>
             <div className="bg-background border border-border rounded p-3 text-center">
-              <div className="text-lg font-bold">{result.statistics.changed_patches}</div>
-              <div className="text-[10px] text-textMuted">Changed Patches</div>
+              <div className="text-lg font-bold text-textMain">{result.statistics.changed_patches}</div>
+              <div className="text-[10px] text-textMuted uppercase tracking-wider">Changed Patches</div>
             </div>
             <div className="bg-background border border-border rounded p-3 text-center">
-              <div className="text-lg font-bold">{result.statistics.total_patches}</div>
-              <div className="text-[10px] text-textMuted">Total Patches</div>
+              <div className="text-lg font-bold text-textMain">{result.statistics.total_patches}</div>
+              <div className="text-[10px] text-textMuted uppercase tracking-wider">Total Patches</div>
             </div>
           </div>
 
           {/* Warning */}
           <div className="flex items-start gap-2 p-3 bg-warning/10 border border-warning/20 rounded text-xs text-warning">
-            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            {result.warning}
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="leading-relaxed">{result.warning}</div>
           </div>
         </div>
       )}

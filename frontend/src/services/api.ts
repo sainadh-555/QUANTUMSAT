@@ -15,6 +15,9 @@ export const getSystemStatus = () => api.get('/system/status').then(r => r.data)
 export const trainClassical = (data: FormData) =>
   api.post('/classify/train', data, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
 
+export const predictImage = (data: FormData) =>
+  api.post('/classify/predict', data, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
+
 export const trainQuantum = (data: FormData) =>
   api.post('/classify/quantum', data, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
 

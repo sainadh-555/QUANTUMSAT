@@ -114,6 +114,13 @@ def classify_train(
         metrics = evaluate_classification(y_test, preds, labels=list(range(len(class_list))))
 
         total_time = round(time.time() - total_start, 2)
+        
+        # Cache model for future predictions
+        global _latest_model, _latest_model_classes
+        _latest_model = model
+        _latest_model_classes = {v: k for k, v in class_mapping.items()}
+        
+
 
         # Save experiment
         exp_id = em.save_experiment(
@@ -144,6 +151,65 @@ def classify_train(
 
     except HTTPException:
         raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Global cache for the last trained model to support predictions
+_latest_model = None
+_latest_model_classes = None
+
+@router.post("/classify/predict")
+async def classify_predict(image: UploadFile = File(...)):
+    """
+    Predicts the land-cover class of a single uploaded image.
+    Requires a model to have been trained recently.
+    """
+    global _latest_model, _latest_model_classes
+    
+    # Check if a model is in memory (simplified for this demo)
+    # If not, we could train a tiny one on the fly if EuroSAT is available
+    if not _latest_model:
+        eurosat_valid, _, _ = validate_eurosat_dataset(EUROSAT_DIR)
+        if not eurosat_valid:
+            raise HTTPException(status_code=400, detail="No model is currently trained, and the EuroSAT dataset is not installed to train one. Please install EuroSAT or train a model first.")
+        
+        # Train a quick mini-model so the user doesn't get stuck
+        class_list = DEFAULT_CLASSES
+        try:
+            X_imgs, y, class_mapping = load_eurosat_images(EUROSAT_DIR, class_list, max_per_class=10)
+            X_features = extract_features(X_imgs)
+            cm = ClassicalModels()
+            _latest_model, _ = cm.train("RBF-SVM", X_features, y)
+            _latest_model_classes = {v: k for k, v in class_mapping.items()}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to auto-train model for prediction: {e}")
+
+    try:
+        # Read and process uploaded image
+        img_bytes = await image.read()
+        img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        
+        # Ensure it's 64x64
+        if img.size != (64, 64):
+            img = img.resize((64, 64))
+            
+        # Extract features
+        features = extract_features([np.array(img)])
+        
+        # Predict
+        cm = ClassicalModels()
+        pred_idx, _ = cm.predict(_latest_model, features)
+        
+        predicted_class = _latest_model_classes.get(pred_idx[0], "Unknown")
+        
+        return {
+            "status": "success",
+            "prediction": predicted_class,
+            "confidence": "N/A (SVM margin)",
+            "message": "Prediction successful using active classical model."
+        }
+        
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
