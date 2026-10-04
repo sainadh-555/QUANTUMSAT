@@ -155,60 +155,69 @@ def classify_train(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-# Global cache for the last trained model to support predictions
+# Global caches
 _latest_model = None
 _latest_model_classes = None
+_latest_quantum_model = None
+_latest_quantum_classes = None
+_latest_quantum_scaler = None
 
 @router.post("/classify/predict")
-async def classify_predict(image: UploadFile = File(...)):
+async def classify_predict(
+    image: UploadFile = File(...),
+    use_quantum: bool = Form(False)
+):
     """
-    Predicts the land-cover class of a single uploaded image.
-    Requires a model to have been trained recently.
+    Predicts the land-cover class of a single uploaded image using the active model.
     """
     global _latest_model, _latest_model_classes
+    global _latest_quantum_model, _latest_quantum_classes, _latest_quantum_scaler
     
-    # Check if a model is in memory (simplified for this demo)
-    # If not, we could train a tiny one on the fly if EuroSAT is available
-    if not _latest_model:
-        eurosat_valid, _, _ = validate_eurosat_dataset(EUROSAT_DIR)
-        if not eurosat_valid:
-            raise HTTPException(status_code=400, detail="No model is currently trained, and the EuroSAT dataset is not installed to train one. Please install EuroSAT or train a model first.")
-        
-        # Train a quick mini-model so the user doesn't get stuck
-        class_list = DEFAULT_CLASSES
-        try:
-            X_imgs, y, class_mapping = load_eurosat_images(EUROSAT_DIR, class_list, max_per_class=10)
-            X_features = extract_features(X_imgs)
-            cm = ClassicalModels()
-            _latest_model, _ = cm.train("RBF-SVM", X_features, y)
-            _latest_model_classes = {v: k for k, v in class_mapping.items()}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to auto-train model for prediction: {e}")
-
     try:
-        # Read and process uploaded image
+        if use_quantum:
+            if not _latest_quantum_model:
+                raise HTTPException(status_code=400, detail="No quantum model is currently active. Please run a Quantum Analysis experiment first.")
+        else:
+            if not _latest_model:
+                # Auto-train a classical model if none exists
+                eurosat_valid, _, _ = validate_eurosat_dataset(EUROSAT_DIR)
+                if not eurosat_valid:
+                    raise HTTPException(status_code=400, detail="No classical model active, and EuroSAT dataset not found to train one.")
+                class_list = DEFAULT_CLASSES
+                X_imgs, y, class_mapping = load_eurosat_images(EUROSAT_DIR, class_list, max_per_class=10)
+                X_features = extract_features(X_imgs)
+                cm = ClassicalModels()
+                _latest_model, _ = cm.train("RBF-SVM", X_features, y)
+                _latest_model_classes = {v: k for k, v in class_mapping.items()}
+
         img_bytes = await image.read()
         img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-        
-        # Ensure it's 64x64
         if img.size != (64, 64):
             img = img.resize((64, 64))
             
-        # Extract features
         features = extract_features([np.array(img)])
         
-        # Predict
-        cm = ClassicalModels()
-        pred_idx, _ = cm.predict(_latest_model, features)
-        
-        predicted_class = _latest_model_classes.get(pred_idx[0], "Unknown")
-        
-        return {
-            "status": "success",
-            "prediction": predicted_class,
-            "confidence": "N/A (SVM margin)",
-            "message": "Prediction successful using active classical model."
-        }
+        if use_quantum:
+            scaled_features = _latest_quantum_scaler.transform(features)
+            pred_idx, _ = _latest_quantum_model.predict(scaled_features)
+            predicted_class = _latest_quantum_classes.get(pred_idx[0], "Unknown")
+            return {
+                "status": "success",
+                "prediction": predicted_class,
+                "confidence": "N/A",
+                "message": "Prediction successful using active Quantum SVM."
+            }
+        else:
+            cm = ClassicalModels()
+            pred_idx, _ = cm.predict(_latest_model, features)
+            predicted_class = _latest_model_classes.get(pred_idx[0], "Unknown")
+            return {
+                "status": "success",
+                "prediction": predicted_class,
+                "confidence": "N/A",
+                "message": "Prediction successful using active classical model."
+            }
+
         
     except Exception as e:
         traceback.print_exc()
@@ -263,6 +272,12 @@ def classify_quantum(
         )
         model, train_time = qmodel.train(X_train_scaled, y_train)
         preds, pred_time = qmodel.predict(X_test_scaled)
+        
+        # Cache quantum model
+        global _latest_quantum_model, _latest_quantum_classes, _latest_quantum_scaler
+        _latest_quantum_model = qmodel
+        _latest_quantum_classes = {v: k for k, v in class_mapping.items()}
+        _latest_quantum_scaler = scaler
 
         metrics = evaluate_classification(y_test, preds, labels=list(range(len(class_list))))
         total_time = round(time.time() - total_start, 2)
@@ -313,6 +328,7 @@ def classify_quantum(
 async def change_detection_compare(
     image1: UploadFile = File(...),
     image2: UploadFile = File(...),
+    method: str = Form("statistical")
 ):
     """
     Compares two uploaded images and produces a change mask.
@@ -330,16 +346,54 @@ async def change_detection_compare(
                 detail=f"Image dimensions must match. Got {img1.size} vs {img2.size}."
             )
 
-        patch_size = 8
+        patch_size = 16  # Slightly larger patch size to reduce number of patches for quantum
         feat1, pos1 = extract_patch_features(img1, patch_size)
         feat2, pos2 = extract_patch_features(img2, patch_size)
 
         diff_features = compute_difference_features(feat1, feat2)
-
-        # Simple threshold-based change detection baseline
         magnitudes = np.linalg.norm(diff_features, axis=1)
-        threshold = np.mean(magnitudes) + np.std(magnitudes)
-        predictions = (magnitudes > threshold).astype(int)
+        total_patches = len(magnitudes)
+
+        if method == "quantum":
+            if total_patches > 500:
+                raise HTTPException(status_code=400, detail="Images too large for unbatched quantum simulator. Try smaller images or statistical method.")
+            
+            # Semi-supervised pseudo-labelling
+            # We assume top 10% magnitude are changed (1) and bottom 40% are unchanged (0)
+            threshold_high = np.percentile(magnitudes, 90)
+            threshold_low = np.percentile(magnitudes, 40)
+            
+            y_pseudo = np.full(total_patches, -1)
+            y_pseudo[magnitudes > threshold_high] = 1
+            y_pseudo[magnitudes < threshold_low] = 0
+            
+            train_idx = y_pseudo != -1
+            if np.sum(train_idx) < 10 or np.sum(y_pseudo == 1) < 2 or np.sum(y_pseudo == 0) < 2:
+                # Fallback to statistical if we can't find enough variance
+                method = "statistical fallback"
+                threshold = np.mean(magnitudes) + np.std(magnitudes)
+                predictions = (magnitudes > threshold).astype(int)
+            else:
+                # Train Quantum SVM on the confident pseudo-labels
+                from app.core.quantum_models import QuantumKernelModel
+                from sklearn.preprocessing import MinMaxScaler
+                
+                X_train = diff_features[train_idx]
+                y_train = y_pseudo[train_idx]
+                
+                scaler = MinMaxScaler(feature_range=(0, np.pi))
+                X_train_scaled = scaler.fit_transform(X_train)
+                X_all_scaled = scaler.transform(diff_features)
+                
+                # Small circuit for speed
+                qmodel = QuantumKernelModel(num_qubits=4, reps=1, entanglement="linear")
+                qmodel.train(X_train_scaled, y_train)
+                predictions, _ = qmodel.predict(X_all_scaled)
+                threshold = 0.0 # not used in quantum
+        else:
+            # Statistical baseline
+            threshold = np.mean(magnitudes) + np.std(magnitudes)
+            predictions = (magnitudes > threshold).astype(int)
 
         change_map = generate_change_map(predictions, pos1, np.array(img1).shape, patch_size)
 
@@ -349,7 +403,6 @@ async def change_detection_compare(
         change_img.save(buf, format="PNG")
         change_b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
 
-        total_patches = len(predictions)
         changed_patches = int(np.sum(predictions))
         unchanged_patches = total_patches - changed_patches
 
@@ -361,14 +414,13 @@ async def change_detection_compare(
                 "changed_patches": changed_patches,
                 "unchanged_patches": unchanged_patches,
                 "change_percentage": round(changed_patches / total_patches * 100, 2) if total_patches > 0 else 0,
-                "threshold_used": round(float(threshold), 4),
-                "method": "Mean RGB patch difference with statistical thresholding",
+                "method_used": method,
             },
             "image_info": {
                 "size": list(img1.size),
                 "patch_size": patch_size,
             },
-            "warning": "This is a statistical baseline. Detected differences may be caused by lighting, sensor noise, or seasonal variation rather than actual land-use change."
+            "warning": "Quantum change detection uses pseudo-labels derived from variance. Classical baseline uses statistical thresholding." if method == "quantum" else "This is a statistical baseline. Detected differences may be caused by lighting or noise."
         }
 
     except HTTPException:

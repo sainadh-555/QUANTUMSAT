@@ -9,6 +9,7 @@ const ChangeDetection = () => {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [sliderPos, setSliderPos] = useState(50);
+  const [method, setMethod] = useState<'statistical' | 'quantum'>('statistical');
   const ref1 = useRef<HTMLInputElement>(null);
   const ref2 = useRef<HTMLInputElement>(null);
 
@@ -26,6 +27,7 @@ const ChangeDetection = () => {
       const fd = new FormData();
       fd.append('image1', img1.file);
       fd.append('image2', img2.file);
+      fd.append('method', method);
       const res = await compareImages(fd);
       setResult(res);
     } catch (e: any) {
@@ -75,6 +77,35 @@ const ChangeDetection = () => {
             </>
           )}
           <input ref={ref2} type="file" accept="image/*" onChange={e => handleFile(e, setImg2)} className="hidden" />
+        </div>
+      </div>
+
+      {/* Method Selection */}
+      <div className="mb-5 bg-surface border border-border rounded p-4">
+        <h3 className="text-xs font-semibold text-textMuted mb-3 uppercase tracking-wider">Analysis Method</h3>
+        <div className="flex items-center gap-6">
+          <label className="flex items-center gap-2 cursor-pointer text-sm">
+            <input 
+              type="radio" 
+              name="method" 
+              value="statistical" 
+              checked={method === 'statistical'} 
+              onChange={() => setMethod('statistical')}
+              className="accent-primary" 
+            />
+            <span className={method === 'statistical' ? 'text-textMain font-medium' : 'text-textMuted'}>Statistical Baseline</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer text-sm">
+            <input 
+              type="radio" 
+              name="method" 
+              value="quantum" 
+              checked={method === 'quantum'} 
+              onChange={() => setMethod('quantum')}
+              className="accent-primary" 
+            />
+            <span className={method === 'quantum' ? 'text-textMain font-medium' : 'text-textMuted'}>Quantum Kernel (Pseudo-labeling)</span>
+          </label>
         </div>
       </div>
 

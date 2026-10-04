@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { trainQuantum } from '../services/api';
-import { Atom, Play, Loader2, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { trainQuantum, predictImage } from '../services/api';
+import { Atom, Play, Loader2, AlertCircle, CheckCircle2, AlertTriangle, Upload, Crosshair } from 'lucide-react';
+
+const SAMPLE_IMG = import.meta.env.BASE_URL + 'sample.svg';
 
 const QuantumLab = () => {
   const [qubits] = useState(4);
@@ -10,6 +12,24 @@ const QuantumLab = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // Prediction state
+  const [predictFile, setPredictFile] = useState<File | null>(null);
+  const [predictUrl, setPredictUrl] = useState<string>(SAMPLE_IMG);
+  const [predictResult, setPredictResult] = useState<any>(null);
+  const [predictLoading, setPredictLoading] = useState(false);
+  const [predictError, setPredictError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPredictFile(file);
+      setPredictUrl(URL.createObjectURL(file));
+      setPredictResult(null);
+      setPredictError(null);
+    }
+  };
 
   const handleRun = async () => {
     setLoading(true);
@@ -28,6 +48,26 @@ const QuantumLab = () => {
       setError(e?.response?.data?.detail || e.message || 'Quantum experiment failed');
     }
     setLoading(false);
+  };
+
+  const handlePredict = async () => {
+    setPredictLoading(true); setPredictError(null); setPredictResult(null);
+    try {
+      const fd = new FormData();
+      if (predictFile) {
+        fd.append('image', predictFile);
+      } else {
+        const response = await fetch(SAMPLE_IMG);
+        const blob = await response.blob();
+        fd.append('image', blob, 'sample.svg');
+      }
+      fd.append('use_quantum', 'true');
+      const res = await predictImage(fd);
+      setPredictResult(res);
+    } catch (e: any) {
+      setPredictError(e?.response?.data?.detail || e.message || 'Prediction failed');
+    }
+    setPredictLoading(false);
   };
 
   return (
@@ -101,10 +141,51 @@ const QuantumLab = () => {
       </div>
 
       {/* Output */}
-      <div className="flex-1 p-6 overflow-y-auto">
-        <div className="flex items-center gap-2 mb-6">
+      <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6">
+        
+        {/* Prediction Section */}
+        <div className="bg-surface border border-border rounded-lg p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold flex items-center gap-2"><Crosshair className="w-4 h-4 text-accentCyan" /> Quantum Single Image Prediction</h2>
+          </div>
+          
+          <div className="flex gap-6 items-start">
+            <div className="w-32 h-32 bg-black rounded border border-border overflow-hidden shrink-0 relative group flex items-center justify-center">
+              <img src={predictUrl} alt="Preview" className="max-w-full max-h-full object-contain" />
+              <div onClick={() => fileRef.current?.click()} className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-xs text-white gap-1 font-medium">
+                <Upload className="w-3 h-3" /> Upload
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+            </div>
+            
+            <div className="flex-1 flex flex-col items-start">
+              <p className="text-xs text-textMuted mb-4 leading-relaxed">
+                Upload a single satellite image (or use the default sample) to predict its land-cover class using the currently active quantum model. 
+                You must train a quantum model first before predicting.
+              </p>
+              
+              <div className="flex items-center gap-3">
+                <button onClick={handlePredict} disabled={predictLoading} className="flex items-center gap-2 px-4 py-2 bg-accent/20 text-accent border border-accent/30 rounded text-sm font-medium hover:bg-accent/30 transition-colors disabled:opacity-50">
+                  {predictLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crosshair className="w-4 h-4" />}
+                  {predictLoading ? 'Analysing…' : 'Predict Class'}
+                </button>
+                {predictResult && (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-surfaceHover border border-border rounded text-sm font-bold text-accentCyan">
+                    Prediction: {predictResult.prediction}
+                  </div>
+                )}
+              </div>
+              
+              {predictError && (
+                <div className="mt-3 text-xs text-danger flex items-center gap-1.5"><AlertCircle className="w-3.5 h-3.5" /> {predictError}</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 mb-4 mt-4 pt-4 border-t border-border">
           <Atom className="w-4 h-4 text-accentCyan" />
-          <h2 className="text-lg font-semibold">Quantum Kernel Output</h2>
+          <h2 className="text-sm font-semibold">Quantum Kernel Output</h2>
         </div>
 
         {error && (
