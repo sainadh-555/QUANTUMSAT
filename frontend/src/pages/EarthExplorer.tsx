@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { getSystemStatus, searchCopernicus, fetchCopernicusImage } from '../services/api';
-import { Layers, Info, AlertTriangle, Upload, MapPin, ZoomIn, ZoomOut, Maximize, Search, Cloud, Calendar, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+import { Layers, Info, AlertTriangle, Upload, MapPin, Search, Cloud, Calendar, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { MapContainer, TileLayer, ImageOverlay, useMap } from 'react-leaflet';
+import L from 'leaflet';
 
 const SAMPLE_IMG = import.meta.env.BASE_URL + 'sample.svg';
 
@@ -24,6 +25,18 @@ const EarthExplorer = () => {
   
   // Copernicus Image Retrieval State
   const [imgLoading, setImgLoading] = useState(false);
+  
+  // Track if we are showing a georeferenced image
+  const [activeBounds, setActiveBounds] = useState<L.LatLngBoundsExpression>([[-90, -180], [90, 180]]);
+
+  // Map updater component
+  const MapUpdater = ({ bounds }: { bounds: L.LatLngBoundsExpression }) => {
+    const map = useMap();
+    useEffect(() => {
+      map.fitBounds(bounds);
+    }, [bounds, map]);
+    return null;
+  };
 
   useEffect(() => {
     getSystemStatus()
@@ -38,6 +51,8 @@ const EarthExplorer = () => {
       setImageFile(file);
       const url = URL.createObjectURL(file);
       setSelectedImage(url);
+      // Uploaded images are not inherently georeferenced, put them on a dummy bounds
+      setActiveBounds([[0, 0], [1, 1]]);
     }
   };
 
@@ -69,6 +84,8 @@ const EarthExplorer = () => {
       const res = await fetchCopernicusImage(fd);
       setSelectedImage(`data:image/jpeg;base64,${res.image_b64}`);
       setImageFile(new File([], `Sentinel2_${date.split('T')[0]}.jpg`, { type: 'image/jpeg' }));
+      const [w, s, e, n] = bbox.split(',').map(Number);
+      setActiveBounds([[s, w], [n, e]]);
     } catch (e: any) {
       setSearchError(e?.response?.data?.detail || e.message || 'Image retrieval failed');
     }
@@ -107,7 +124,7 @@ const EarthExplorer = () => {
         <div className="flex-1 bg-black relative flex flex-col items-center justify-center overflow-hidden">
           
           {!eurosat?.available && !loading && (
-            <div className="absolute top-4 left-4 z-10 flex items-center gap-2 px-3 py-2 bg-surface/90 backdrop-blur border border-warning/50 rounded shadow-lg">
+            <div className="absolute top-4 left-4 z-[1000] flex items-center gap-2 px-3 py-2 bg-surface/90 backdrop-blur border border-warning/50 rounded shadow-lg">
               <AlertTriangle className="w-4 h-4 text-warning" />
               <div className="text-xs">
                 <span className="font-semibold text-warning block">No Dataset Installed</span>
@@ -115,33 +132,26 @@ const EarthExplorer = () => {
               </div>
             </div>
           )}
+          
+          {imgLoading && (
+            <div className="absolute inset-0 z-[2000] flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm text-white">
+              <Loader2 className="w-10 h-10 animate-spin mb-3" />
+              <div>Retrieving True-Color Imagery from CDSE...</div>
+            </div>
+          )}
 
-          <TransformWrapper initialScale={1} minScale={0.1} maxScale={10} centerOnInit>
-            {({ zoomIn, zoomOut, resetTransform }) => (
-              <>
-                <div className="absolute bottom-6 right-6 z-10 flex flex-col gap-1 bg-surface/80 backdrop-blur p-1 rounded border border-border shadow-lg">
-                  <button onClick={() => zoomIn()} className="p-2 hover:bg-background rounded text-textMain" title="Zoom In"><ZoomIn className="w-4 h-4" /></button>
-                  <button onClick={() => zoomOut()} className="p-2 hover:bg-background rounded text-textMain" title="Zoom Out"><ZoomOut className="w-4 h-4" /></button>
-                  <button onClick={() => resetTransform()} className="p-2 hover:bg-background rounded text-textMain" title="Reset View"><Maximize className="w-4 h-4" /></button>
-                </div>
-                
-                <TransformComponent wrapperClass="!w-full !h-full" contentClass="!w-full !h-full flex items-center justify-center relative">
-                  {imgLoading && (
-                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm text-white">
-                      <Loader2 className="w-10 h-10 animate-spin mb-3" />
-                      <div>Retrieving True-Color Imagery from CDSE...</div>
-                    </div>
-                  )}
-                  <img
-                    src={selectedImage}
-                    alt="Satellite imagery"
-                    className="max-w-[80%] max-h-[80%] object-contain shadow-2xl ring-1 ring-border"
-                    style={{ imageRendering: 'pixelated' }}
-                  />
-                </TransformComponent>
-              </>
+          <MapContainer center={[40.85, 14.45]} zoom={11} className="w-full h-full z-0" style={{ background: '#0B0F19' }}>
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            />
+            {isSample ? (
+              <ImageOverlay url={selectedImage} bounds={[[40.8, 14.4], [40.9, 14.5]]} />
+            ) : (
+              <ImageOverlay url={selectedImage} bounds={activeBounds} />
             )}
-          </TransformWrapper>
+            <MapUpdater bounds={isSample ? [[40.8, 14.4], [40.9, 14.5]] : activeBounds} />
+          </MapContainer>
         </div>
 
         {/* Right metadata panel */}
