@@ -27,6 +27,19 @@ em = ExperimentManager()
 def health_check():
     return {"status": "ok", "message": "Terra Quantum backend is running"}
 
+@router.get("/datasets/eurosat/status")
+def eurosat_status():
+    from app.core.dataset_validation import validate_eurosat_dataset
+    from config.settings import EUROSAT_DIR
+    eurosat_valid, msg, classes = validate_eurosat_dataset(EUROSAT_DIR)
+    return {
+        "status": "ok",
+        "available": eurosat_valid,
+        "message": msg,
+        "classes": classes,
+        "path": str(EUROSAT_DIR)
+    }
+
 
 @router.get("/system/status")
 def system_status():
@@ -70,6 +83,7 @@ def system_status():
 
 
 @router.post("/classify/train")
+@router.post("/classification/train")
 def classify_train(
     model_type: str = Form("RBF-SVM"),
     classes: str = Form("AnnualCrop,Forest,Residential,River"),
@@ -163,6 +177,7 @@ _latest_quantum_classes = None
 _latest_quantum_scaler = None
 
 @router.post("/classify/predict")
+@router.post("/classification/predict")
 async def classify_predict(
     image: UploadFile = File(...),
     use_quantum: bool = Form(False)

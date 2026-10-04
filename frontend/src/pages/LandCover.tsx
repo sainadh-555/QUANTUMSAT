@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { trainClassical, predictImage } from '../services/api';
+import { useState, useRef, useEffect } from 'react';
+import { trainClassical, predictImage, getSystemStatus } from '../services/api';
 import { Play, Loader2, AlertCircle, CheckCircle2, Settings2, BarChart2, Upload, Crosshair } from 'lucide-react';
 
 const SAMPLE_IMG = import.meta.env.BASE_URL + 'sample.svg';
@@ -12,6 +12,11 @@ const LandCover = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [systemStatus, setSystemStatus] = useState<any>(null);
+
+  useEffect(() => {
+    getSystemStatus().then(setSystemStatus).catch(console.error);
+  }, []);
   
   // Prediction state
   const [predictFile, setPredictFile] = useState<File | null>(null);
@@ -80,6 +85,23 @@ const LandCover = () => {
         <div className="flex items-center gap-2 mb-5 pb-3 border-b border-border">
           <Settings2 className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-semibold">Training Config</h3>
+        </div>
+
+        <div className="mb-4 p-2.5 bg-background border border-border rounded">
+          <h4 className="text-[10px] font-semibold text-textMuted mb-2 uppercase tracking-wider">Dataset Status</h4>
+          {systemStatus ? (
+            <div className="text-xs flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full shrink-0 ${systemStatus.datasets?.eurosat?.available ? 'bg-accent' : 'bg-warning'}`} />
+              <span className={systemStatus.datasets?.eurosat?.available ? 'text-accent font-medium' : 'text-warning font-medium'}>
+                {systemStatus.datasets?.eurosat?.available ? 'Ready' : 'Not Ready'}
+              </span>
+              <span className="text-textMuted truncate">{systemStatus.datasets?.eurosat?.message}</span>
+            </div>
+          ) : (
+            <div className="text-xs text-textMuted flex items-center gap-2">
+              <Loader2 className="w-3 h-3 animate-spin shrink-0" /> <span className="truncate">Checking (may download)...</span>
+            </div>
+          )}
         </div>
 
         <label className="text-xs text-textMuted mb-1.5">Algorithm</label>
