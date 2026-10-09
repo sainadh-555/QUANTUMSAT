@@ -22,25 +22,9 @@ def ensure_eurosat_dataset(dataset_path: Path):
         if all(c in classes for c in DEFAULT_CLASSES):
             return True, "EuroSAT already exists."
             
-    # Need to download
-    print("Downloading EuroSAT dataset...")
-    base_dir = dataset_path.parent
-    base_dir.mkdir(parents=True, exist_ok=True)
-    
-    zip_url = "https://madm.dfki.de/files/sentinel/EuroSAT.zip"
-    
-    try:
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            zip_path = Path(tmp_dir) / "EuroSAT.zip"
-            download_file(zip_url, zip_path)
-            
-            print("Extracting EuroSAT...")
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(base_dir)
-                
-        return True, "EuroSAT dataset successfully downloaded and extracted."
-    except Exception as e:
-        return False, f"Failed to download or extract EuroSAT: {str(e)}"
+    # Since Render times out on 2GB synchronous downloads, we will fail fast
+    # and require the user to mount a disk or use a pre-trained model.
+    return False, "EuroSAT dataset is missing. Automatic download is disabled on Render free tier to prevent 100s timeouts. Please mount a persistent disk with the dataset."
 
 def validate_eurosat_dataset(dataset_path: Path):
     """
