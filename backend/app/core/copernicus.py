@@ -50,7 +50,8 @@ class CopernicusService:
             "filter": {
                 "op": "<=",
                 "args": [{"property": "eo:cloud_cover"}, max_cloud_cover]
-            }
+            },
+            "filter-lang": "cql2-json"
         }
         
         resp = requests.post(CATALOG_URL, headers=headers, json=payload)
