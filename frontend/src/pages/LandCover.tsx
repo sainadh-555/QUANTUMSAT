@@ -1,5 +1,6 @@
+import { useState, useEffect, useRef } from 'react';
 import { trainClassical, predictImage, getSystemStatus } from '../services/api';
-import { Play, Loader2, AlertCircle, CheckCircle2, Settings2, BarChart2, Upload, Crosshair, ChevronRight, ChevronLeft, Map } from 'lucide-react';
+import { Play, Loader2, AlertCircle, Settings2, BarChart2, Upload, Crosshair, ChevronLeft, Map } from 'lucide-react';
 
 const SAMPLE_IMG = import.meta.env.BASE_URL + 'sample.svg';
 
@@ -228,7 +229,6 @@ const LandCover = () => {
           </div>
         )}
       </div>
-    </div>
   );
 };
 
