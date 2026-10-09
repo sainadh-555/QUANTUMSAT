@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Globe, Map, GitCompareArrows, Atom, BarChart3, Settings, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
+import { Globe, Map, GitCompareArrows, Atom, BarChart3, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const links = [
   { to: '/', icon: Globe, label: 'Earth Explorer' },
@@ -53,12 +53,16 @@ const Sidebar = () => {
             }
             title={collapsed ? l.label : undefined}
           >
-            <l.icon className={`shrink-0 ${collapsed ? 'w-5 h-5 mx-auto' : 'w-[18px] h-[18px]'}`} />
-            {!collapsed && <span className="text-[13px] whitespace-nowrap">{l.label}</span>}
-            
-            {/* Active Indicator Line */}
-            {({ isActive }) => isActive && (
-              <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-primary rounded-r-full" />
+            {({ isActive }) => (
+              <>
+                <l.icon className={`shrink-0 ${collapsed ? 'w-5 h-5 mx-auto' : 'w-[18px] h-[18px]'}`} />
+                {!collapsed && <span className="text-[13px] whitespace-nowrap">{l.label}</span>}
+                
+                {/* Active Indicator Line */}
+                {isActive && (
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-primary rounded-r-full" />
+                )}
+              </>
             )}
           </NavLink>
         ))}
