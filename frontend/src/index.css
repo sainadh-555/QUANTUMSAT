@@ -2,23 +2,59 @@
 @import "leaflet/dist/leaflet.css";
 
 @theme {
-  --color-background: #0d1117;
-  --color-surface: #161b22;
-  --color-surfaceHover: #21262d;
-  --color-border: #30363d;
-  --color-primary: #58a6ff;
-  --color-secondary: #8b949e;
-  --color-accent: #3fb950;
-  --color-accentCyan: #56d4dd;
-  --color-warning: #d29922;
-  --color-danger: #f85149;
-  --color-textMain: #e6edf3;
-  --color-textMuted: #8b949e;
+  --color-background: var(--bg-main);
+  --color-surface: var(--bg-surface);
+  --color-surfaceHover: var(--bg-surface-hover);
+  --color-border: var(--border-color);
+  --color-primary: var(--primary-main);
+  --color-secondary: var(--secondary-main);
+  --color-accent: var(--accent-success);
+  --color-accentCyan: var(--accent-cyan);
+  --color-warning: var(--accent-warning);
+  --color-danger: var(--accent-danger);
+  --color-textMain: var(--text-primary);
+  --color-textMuted: var(--text-secondary);
 }
 
 @layer base {
+  :root {
+    /* Normal Mode - Soft Light UI */
+    --bg-main: #E0E5EC;
+    --bg-surface: #F3F6F9;
+    --bg-surface-hover: #E9EEF3;
+    --border-color: #D1D9E6;
+    --primary-main: #6C63FF;
+    --secondary-main: #8B84FF;
+    --accent-success: #238A76;
+    --accent-warning: #A86A18;
+    --accent-danger: #D32F2F;
+    --accent-cyan: #0284C7;
+    --text-primary: #3D4852;
+    --text-secondary: #6B7280;
+  }
+
+  .quantum-mode {
+    /* Quantum Mode - Dark Cyberpunk */
+    --bg-main: #0B0714;
+    --bg-surface: #171027;
+    --bg-surface-hover: #1F1533;
+    --border-color: #31214D;
+    --primary-main: #8B5CF6;
+    --secondary-main: #A78BFA;
+    --accent-success: #10B981;
+    --accent-warning: #F59E0B;
+    --accent-danger: #EF4444;
+    --accent-cyan: #22D3EE;
+    --text-primary: #F5F3FF;
+    --text-secondary: #B6AACD;
+  }
+
   body {
-    @apply bg-background text-textMain antialiased m-0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+    @apply bg-background text-textMain antialiased m-0 transition-colors duration-300;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
   }
 }

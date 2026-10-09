@@ -152,6 +152,34 @@ const EarthExplorer = () => {
             )}
             <MapUpdater bounds={isSample ? [[40.8, 14.4], [40.9, 14.5]] : activeBounds} />
           </MapContainer>
+
+          {/* Contextual Action Panel */}
+          {!isSample && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] bg-surface/95 backdrop-blur shadow-2xl border border-border rounded-xl w-[500px] p-4 animate-in slide-in-from-bottom-8">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="font-semibold text-textMain text-sm">Region Selected</h3>
+                  <div className="text-[10px] text-textMuted mt-0.5">{imageFile?.name}</div>
+                </div>
+                <button className="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded font-medium text-xs transition-colors shadow-lg shadow-primary/20">
+                  Analyze this region
+                </button>
+              </div>
+              <div className="bg-background border border-border rounded-lg p-3">
+                <label className="text-[10px] font-medium text-textMuted uppercase tracking-wider mb-2 block">Ask Terra Copilot</label>
+                <input 
+                  type="text" 
+                  placeholder="What would you like to know about this area?"
+                  className="w-full bg-surface border border-border rounded px-3 py-2 text-xs text-textMain focus:outline-none focus:border-primary mb-2 placeholder:text-textMuted/50"
+                />
+                <div className="flex flex-wrap gap-1.5">
+                  <button className="text-[10px] bg-surfaceHover hover:bg-border text-textMuted hover:text-textMain px-2 py-1 rounded transition-colors">What is the land-cover distribution?</button>
+                  <button className="text-[10px] bg-surfaceHover hover:bg-border text-textMuted hover:text-textMain px-2 py-1 rounded transition-colors">Has vegetation changed?</button>
+                  <button className="text-[10px] bg-surfaceHover hover:bg-border text-textMuted hover:text-textMain px-2 py-1 rounded transition-colors">Is there urban expansion?</button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right metadata panel */}

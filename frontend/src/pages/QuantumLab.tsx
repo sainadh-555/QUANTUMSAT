@@ -141,8 +141,23 @@ const QuantumLab = () => {
       </div>
 
       {/* Output */}
-      <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6">
+      <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6 relative">
         
+        {/* Quota Panel */}
+        <div className="flex items-center justify-between bg-surface/50 border border-border p-3 rounded-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-accent animate-pulse"></div>
+            <div>
+              <div className="text-xs font-semibold text-textMain tracking-wide">IBM QUANTUM SERVICE</div>
+              <div className="text-[10px] text-textMuted font-mono">STATUS: UNAVAILABLE · USING LOCAL AER SIMULATOR</div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[10px] text-textMuted font-mono mb-0.5">QUOTA REMAINING</div>
+            <div className="text-sm font-bold text-accentCyan font-mono">UNLIMITED (LOCAL)</div>
+          </div>
+        </div>
+
         {/* Prediction Section */}
         <div className="bg-surface border border-border rounded-lg p-5">
           <div className="flex items-center justify-between mb-4">
@@ -200,18 +215,30 @@ const QuantumLab = () => {
         )}
 
         {!result && !loading && !error && (
-          <div className="flex flex-col items-center justify-center h-64 text-textMuted">
-            <Atom className="w-10 h-10 opacity-15 mb-3" />
-            <p className="text-sm">Configure the quantum circuit and run an experiment.</p>
-            <p className="text-xs mt-1">The EuroSAT dataset must be available on the backend.</p>
+          <div className="flex flex-col h-64 text-textMuted bg-surfaceHover/30 border border-border rounded-lg p-6 relative overflow-hidden">
+            <div className="absolute -right-10 -bottom-10 opacity-5">
+              <Atom className="w-64 h-64" />
+            </div>
+            <h3 className="text-lg font-bold text-textMain mb-2 font-display tracking-wide">DHARA Quantum Mode</h3>
+            <p className="text-sm max-w-lg leading-relaxed mb-4">
+              You are now in the dedicated quantum-computing workspace. Here you can run supported Qiskit workflows like 
+              quantum-kernel classification on Earth observation data.
+            </p>
+            <ul className="text-xs space-y-2 mb-6">
+              <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary"></div> Classical feature extraction is performed first.</li>
+              <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary"></div> Compact features are converted to quantum circuits using ZZFeatureMap.</li>
+              <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary"></div> Execution runs on the local Aer Simulator (noiseless).</li>
+            </ul>
+            <p className="text-xs mt-auto font-mono text-accentCyan opacity-70">AWAITING_CIRCUIT_CONFIGURATION...</p>
           </div>
         )}
 
         {loading && (
-          <div className="flex flex-col items-center justify-center h-64 text-primary">
-            <Loader2 className="w-8 h-8 animate-spin mb-3" />
-            <p className="text-sm">Building quantum kernel matrix…</p>
-            <p className="text-xs text-textMuted mt-1">This may take 30–120 seconds depending on sample size.</p>
+          <div className="flex flex-col items-center justify-center h-64 text-primary bg-surfaceHover/20 border border-border rounded-lg relative overflow-hidden">
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPHBhdGggZD0iTTAgMEw4IDhaTTAgOEw4IDBaIiBzdHJva2U9IiNmZmYiIHN0cm9rZS1vcGFjaXR5PSIwLjA1Ii8+Cjwvc3ZnPg==')] opacity-20"></div>
+            <Loader2 className="w-10 h-10 animate-spin mb-4" />
+            <p className="text-sm font-medium tracking-wide">BUILDING QUANTUM KERNEL MATRIX...</p>
+            <p className="text-[10px] text-textMuted mt-2 uppercase tracking-widest font-mono">Simulating {samples * 4} states · Est. Time 30-120s</p>
           </div>
         )}
 
