@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { searchCopernicus, fetchCopernicusImage } from '../services/api';
 import { Layers, MapPin, Search, Cloud, Calendar, Image as ImageIcon, Loader2, Camera, Check, X } from 'lucide-react';
-import { MapContainer, TileLayer, ImageOverlay, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, ImageOverlay, useMap, Rectangle } from 'react-leaflet';
 import L from 'leaflet';
 import { useCapture } from '../context/CaptureContext';
 
@@ -42,8 +42,9 @@ const EarthExplorer = () => {
 
     useEffect(() => {
       const onMoveEnd = () => {
-        const currentBounds = map.getBounds();
-        const newBbox = `${currentBounds.getWest().toFixed(3)},${currentBounds.getSouth().toFixed(3)},${currentBounds.getEast().toFixed(3)},${currentBounds.getNorth().toFixed(3)}`;
+        const center = map.getCenter();
+        const offset = 0.05; // 0.05 degrees ~ 5.5km (so 11km x 11km box)
+        const newBbox = `${(center.lng - offset).toFixed(3)},${(center.lat - offset).toFixed(3)},${(center.lng + offset).toFixed(3)},${(center.lat + offset).toFixed(3)}`;
         setBbox(newBbox);
       };
       map.on('moveend', onMoveEnd);
@@ -155,6 +156,15 @@ const EarthExplorer = () => {
             url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
           />
           {selectedImage && <ImageOverlay url={selectedImage} bounds={activeBounds} />}
+          {bbox && !selectedImage && (
+            <Rectangle 
+              bounds={[
+                [Number(bbox.split(',')[1]), Number(bbox.split(',')[0])],
+                [Number(bbox.split(',')[3]), Number(bbox.split(',')[2])]
+              ]} 
+              pathOptions={{ color: '#6C63FF', weight: 2, fillOpacity: 0.1, dashArray: '4' }} 
+            />
+          )}
           <MapUpdater bounds={activeBounds} />
         </MapContainer>
 
@@ -170,8 +180,8 @@ const EarthExplorer = () => {
             
             <div className="p-4 space-y-3 overflow-y-auto">
               <div>
-                <label className="text-[10px] text-textMuted block mb-1">Bounding Box (W,S,E,N)</label>
-                <input type="text" value={bbox} onChange={e => setBbox(e.target.value)} className="w-full bg-background border border-border rounded px-2 py-1.5 text-xs focus:border-primary focus:outline-none transition-colors" />
+                <label className="text-[10px] text-textMuted block mb-1">Search Region (Pan Map to Change)</label>
+                <input type="text" value={bbox} readOnly className="w-full bg-background border border-border rounded px-2 py-1.5 text-[10px] focus:outline-none text-textMuted cursor-default" />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
