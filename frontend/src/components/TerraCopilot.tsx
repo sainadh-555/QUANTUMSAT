@@ -92,7 +92,7 @@ const TerraCopilot = ({ onClose }: { onClose: () => void }) => {
         {messages.map((msg, i) => (
           <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
             <div
-              className={`text-[13px] leading-relaxed p-3 rounded-lg max-w-[92%] ${
+              className={`text-[13px] leading-relaxed p-3 rounded-lg max-w-[92%] whitespace-pre-wrap ${
                 msg.role === 'user'
                   ? 'bg-primary/15 text-textMain border border-primary/20'
                   : 'bg-background text-textMuted border border-border'

@@ -498,6 +498,17 @@ async def copilot_ask(
                 "source": "ui_context"
             }
 
+    if any(kw in q for kw in ["hi", "hello", "hey", "help", "who are you", "what can you do", "action", "capabilities"]):
+        return {
+            "answer": "Hello! I am Terra Copilot, your Earth Intelligence AI assistant. I can help you with the following actions:\n"
+                      "• **Analyze Data**: Ask me about past land-cover classifications and quantum experiments.\n"
+                      "• **Explain Context**: Ask me to 'explain this result' when you have a classification or change map open.\n"
+                      "• **Understand Models**: Ask me how Quantum Kernel SVMs or Classical SVMs work.\n"
+                      "• **Dataset Info**: Ask me about the EuroSAT dataset and Sentinel-2 imagery.\n"
+                      "How can I assist you with your Earth observation analysis today?",
+            "source": "system"
+        }
+
     experiments = em.get_all_experiments()
     eurosat_valid, _, eurosat_classes = validate_eurosat_dataset(EUROSAT_DIR)
 
