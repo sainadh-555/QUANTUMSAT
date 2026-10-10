@@ -398,11 +398,10 @@ async def change_detection_compare(
                 method = "statistical"
 
         if method == "quantum":
-            if total_patches > 4096:
-                raise HTTPException(status_code=400, detail="Images too large for unbatched quantum simulator. Try smaller images, or use Statistical / Auto mode.")
+            if total_patches > 16384:
+                raise HTTPException(status_code=400, detail="Images too massive even for hybrid mode. Max 16,384 patches.")
             
             # Semi-supervised pseudo-labelling
-            # We assume top 10% magnitude are changed (1) and bottom 40% are unchanged (0)
             threshold_high = np.percentile(magnitudes, 90)
             threshold_low = np.percentile(magnitudes, 40)
             
@@ -410,29 +409,47 @@ async def change_detection_compare(
             y_pseudo[magnitudes > threshold_high] = 1
             y_pseudo[magnitudes < threshold_low] = 0
             
-            train_idx = y_pseudo != -1
-            if np.sum(train_idx) < 10 or np.sum(y_pseudo == 1) < 2 or np.sum(y_pseudo == 0) < 2:
+            pos_idx = np.where(y_pseudo == 1)[0]
+            neg_idx = np.where(y_pseudo == 0)[0]
+            
+            if len(pos_idx) < 2 or len(neg_idx) < 2:
                 # Fallback to statistical if we can't find enough variance
                 method = "statistical fallback"
                 threshold = np.mean(magnitudes) + np.std(magnitudes)
                 predictions = (magnitudes > threshold).astype(int)
             else:
-                # Train Quantum SVM on the confident pseudo-labels
+                # 1. Quantum Knowledge Distillation
+                # Train Quantum SVM on a tiny highly-confident subset (max 20 samples) to prevent Render timeout
+                if len(pos_idx) > 10: pos_idx = np.random.choice(pos_idx, 10, replace=False)
+                if len(neg_idx) > 10: neg_idx = np.random.choice(neg_idx, 10, replace=False)
+                
+                q_train_idx = np.concatenate([pos_idx, neg_idx])
+                
                 from app.core.quantum_models import QuantumKernelModel
                 from sklearn.preprocessing import MinMaxScaler
-                
-                X_train = diff_features[train_idx]
-                y_train = y_pseudo[train_idx]
+                from sklearn.svm import SVC
                 
                 scaler = MinMaxScaler(feature_range=(0, np.pi))
-                X_train_scaled = scaler.fit_transform(X_train)
-                X_all_scaled = scaler.transform(diff_features)
+                X_all_scaled = scaler.fit_transform(diff_features)
                 
-                # Small circuit for speed
+                X_q_train = X_all_scaled[q_train_idx]
+                y_q_train = y_pseudo[q_train_idx]
+                
                 qmodel = QuantumKernelModel(num_qubits=4, reps=1, entanglement="linear")
-                qmodel.train(X_train_scaled, y_train)
-                predictions, _ = qmodel.predict(X_all_scaled)
-                threshold = 0.0 # not used in quantum
+                qmodel.train(X_q_train, y_q_train)
+                
+                # 2. Predict on a larger distillation subset (max 256 samples)
+                eval_idx = np.random.choice(total_patches, min(total_patches, 256), replace=False)
+                X_eval = X_all_scaled[eval_idx]
+                y_eval_quantum, _ = qmodel.predict(X_eval)
+                
+                # 3. Train Classical SVM Student on Quantum Teacher's labels
+                student_svm = SVC(kernel='rbf', C=1.0)
+                student_svm.fit(X_eval, y_eval_quantum)
+                
+                # 4. Predict ALL patches instantly using the Student SVM
+                predictions = student_svm.predict(X_all_scaled)
+                threshold = 0.0
         else:
             # Statistical baseline
             threshold = np.mean(magnitudes) + np.std(magnitudes)
