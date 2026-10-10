@@ -17,7 +17,7 @@ const dataURLtoFile = (dataurl: string, filename: string) => {
 }
 
 const ChangeDetection = () => {
-  const { captures } = useCapture();
+  const { captures, addCapture } = useCapture();
   
   // Selection state
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
