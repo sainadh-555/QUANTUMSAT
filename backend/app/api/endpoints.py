@@ -250,6 +250,8 @@ async def classify_predict(
             }
 
         
+    except HTTPException:
+        raise
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
@@ -258,7 +260,7 @@ async def classify_predict(
 @router.post("/classify/quantum")
 def classify_quantum(
     classes: str = Form("AnnualCrop,Forest,Residential,River"),
-    samples_per_class: int = Form(15),
+    samples_per_class: int = Form(5),
     qubits: int = Form(4),
     reps: int = Form(1),
     entanglement: str = Form("linear"),
@@ -268,10 +270,10 @@ def classify_quantum(
     Bounded to small sample sizes due to simulator cost.
     """
     class_list = [c.strip() for c in classes.split(",") if c.strip()]
-    if samples_per_class > 30:
+    if samples_per_class > 10:
         raise HTTPException(
             status_code=400,
-            detail="Quantum experiments are bounded to 30 samples per class to keep execution feasible on the simulator."
+            detail="Quantum experiments are bounded to 10 samples per class to prevent cloud deployment timeouts."
         )
 
     eurosat_valid, msg, _ = validate_eurosat_dataset(EUROSAT_DIR)

@@ -21,7 +21,7 @@ const QuantumLab = () => {
   const [qubits] = useState(4);
   const [reps, setReps] = useState(1);
   const [entanglement, setEntanglement] = useState('linear');
-  const [samples, setSamples] = useState(15);
+  const [samples, setSamples] = useState(5);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -135,13 +135,13 @@ const QuantumLab = () => {
         <label className="text-xs text-textMuted mb-1.5">Samples per class</label>
         <input
           type="number"
-          min={5}
-          max={30}
+          min={3}
+          max={10}
           value={samples}
           onChange={e => setSamples(Number(e.target.value))}
           className="bg-background border border-border rounded px-2.5 py-1.5 text-sm text-textMain mb-4 focus:outline-none focus:border-primary"
         />
-        <div className="text-[9px] text-textMuted mb-4">Bounded to ≤30 for simulator feasibility.</div>
+        <div className="text-[9px] text-textMuted mb-4">Bounded to ≤10 for simulator feasibility (cloud timeouts).</div>
 
         <div className="p-3 bg-warning/10 border border-warning/20 rounded mb-4 text-xs text-warning flex items-start gap-2">
           <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
