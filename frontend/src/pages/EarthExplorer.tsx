@@ -25,6 +25,7 @@ const EarthExplorer = () => {
   const [searchError, setSearchError] = useState('');
   
   const [imgLoading, setImgLoading] = useState(false);
+  const [swipeRatio, setSwipeRatio] = useState<number>(50);
   const [activeBounds, setActiveBounds] = useState<L.LatLngBoundsExpression | null>(null);
   
   const [panelOpen, setPanelOpen] = useState(true);
@@ -152,12 +153,18 @@ const EarthExplorer = () => {
           </div>
         )}
 
+        <style>{`
+          .swipe-overlay {
+            clip-path: polygon(0 0, ${swipeRatio}% 0, ${swipeRatio}% 100%, 0 100%);
+          }
+        `}</style>
+
         <MapContainer center={[16.306, 80.436]} zoom={12} className="w-full h-full z-0" style={{ background: '#0B0F19' }}>
           <TileLayer
             attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           />
-          {selectedImage && activeBounds && <ImageOverlay url={selectedImage} bounds={activeBounds} />}
+          {selectedImage && activeBounds && <ImageOverlay url={selectedImage} bounds={activeBounds} className="swipe-overlay" />}
           {bbox && !selectedImage && (
             <Rectangle 
               bounds={[
@@ -169,6 +176,22 @@ const EarthExplorer = () => {
           )}
           <MapUpdater bounds={activeBounds} />
         </MapContainer>
+
+        {/* Swipe Tool UI */}
+        {selectedImage && (
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[1000] w-96 bg-surface/90 backdrop-blur border border-border p-3 rounded-xl flex items-center gap-3 shadow-2xl">
+            <span className="text-[10px] font-bold text-textMain w-16 text-right">OVERLAY</span>
+            <input 
+              type="range" 
+              min="0" 
+              max="100" 
+              value={swipeRatio} 
+              onChange={(e) => setSwipeRatio(Number(e.target.value))}
+              className="flex-1 accent-primary h-1.5 bg-border rounded-full cursor-ew-resize"
+            />
+            <span className="text-[10px] font-bold text-textMuted w-16">BASEMAP</span>
+          </div>
+        )}
 
         {/* Collapsible Panel */}
         <div className={`absolute top-4 right-4 z-[1000] transition-transform duration-300 ${panelOpen ? 'translate-x-0' : 'translate-x-[110%]'}`}>
