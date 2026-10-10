@@ -276,13 +276,13 @@ const EarthExplorer = () => {
               className="flex items-center gap-1.5 text-xs text-textMuted hover:text-primary transition-colors"
             >
               {captureFeedback ? <Check className="w-4 h-4 text-primary" /> : <Camera className="w-4 h-4" />} 
-              {captureFeedback ? 'Captured' : 'Capture Snapshot'}
+              {captureFeedback ? 'Photo Taken!' : 'Take Photo'}
             </button>
             <button 
-              onClick={() => navigate('/earth-analysis')}
+              onClick={() => navigate('/applications')}
               className="flex items-center gap-1.5 text-xs bg-primary text-white px-3 py-1.5 rounded font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
             >
-              Analyze Area
+              Analyze in Earth Modules
             </button>
           </div>
         )}
