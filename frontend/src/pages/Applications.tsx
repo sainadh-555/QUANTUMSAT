@@ -19,6 +19,8 @@ const Applications = () => {
   const [t1File, setT1File] = useState<File | null>(null);
   const [t1Url, setT1Url] = useState<string | null>(null);
   const [t2File, setT2File] = useState<File | null>(null);
+  
+  const [method, setMethod] = useState<'auto' | 'statistical' | 'quantum'>('auto');
   const [t2Url, setT2Url] = useState<string | null>(null);
   
   const t1Ref = useRef<HTMLInputElement>(null);
@@ -56,8 +58,10 @@ const Applications = () => {
       const fd = new FormData();
       fd.append('image1', t1File);
       fd.append('image2', t2File);
-      fd.append('method', 'auto');
-      fd.append('use_quantum', 'true');
+      fd.append('method', method);
+      if (method === 'quantum' || method === 'auto') {
+        fd.append('use_quantum', 'true');
+      }
       
       const res = await compareImages(fd);
       setResult(res);
@@ -97,16 +101,27 @@ const Applications = () => {
           <div className="p-6 border-b border-border flex justify-between items-center bg-surfaceHover">
             <div>
               <span className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1 block">{activeApp.module} - {activeApp.badge}</span>
-              <h2 className="text-xl font-bold text-textMain">Quantum-Assisted {activeApp.title}</h2>
+              <h2 className="text-xl font-bold text-textMain">Earth Intelligence Module</h2>
             </div>
-            <button 
-              onClick={runAnalysis}
-              disabled={loading || !t1File || !t2File}
-              className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-              {loading ? 'Analyzing...' : 'Run Module Analysis'}
-            </button>
+            <div className="flex items-center gap-3">
+              <select 
+                value={method} 
+                onChange={(e) => setMethod(e.target.value as any)}
+                className="bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-textMain focus:outline-none focus:border-primary"
+              >
+                <option value="auto">Auto Mode (Recommended)</option>
+                <option value="quantum">Quantum Mode (ZZFeatureMap)</option>
+                <option value="statistical">Classical AI Mode</option>
+              </select>
+              <button 
+                onClick={runAnalysis}
+                disabled={loading || !t1File || !t2File}
+                className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                {loading ? 'Analyzing...' : 'Run Module Analysis'}
+              </button>
+            </div>
           </div>
 
           {/* Content */}
