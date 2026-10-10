@@ -21,7 +21,7 @@ class QuantumKernelModel:
         # If backend is provided, we use the Fidelity algorithm or Sampler
         self.quantum_kernel = FidelityQuantumKernel(feature_map=self.feature_map)
         
-        self.svm = SVC(kernel=self.quantum_kernel.evaluate, probability=True)
+        self.svm = SVC(kernel=self.quantum_kernel.evaluate, probability=False)
         
     def train(self, X_train, y_train):
         start_time = time.time()
@@ -37,6 +37,17 @@ class QuantumKernelModel:
 
     def predict_proba(self, X_test):
         start_time = time.time()
-        probs = self.svm.predict_proba(X_test)
+        import numpy as np
+        decisions = self.svm.decision_function(X_test)
+        
+        if len(decisions.shape) == 1:
+            # Binary classification
+            probs_pos = 1 / (1 + np.exp(-decisions))
+            probs = np.vstack([1 - probs_pos, probs_pos]).T
+        else:
+            # Multi-class softmax
+            exp_decisions = np.exp(decisions - np.max(decisions, axis=1, keepdims=True))
+            probs = exp_decisions / np.sum(exp_decisions, axis=1, keepdims=True)
+            
         prediction_time = time.time() - start_time
         return probs, prediction_time
