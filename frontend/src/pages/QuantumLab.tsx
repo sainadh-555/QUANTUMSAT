@@ -36,13 +36,26 @@ const QuantumLab = () => {
   const [predictError, setPredictError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setPredictFile(file);
       setPredictUrl(URL.createObjectURL(file));
       setPredictResult(null);
       setPredictError(null);
+      
+      // Auto analyze
+      setPredictLoading(true);
+      try {
+        const fd = new FormData();
+        fd.append('image', file);
+        fd.append('use_quantum', 'true');
+        const res = await predictImage(fd);
+        setPredictResult(res);
+      } catch (err: any) {
+        setPredictError(err?.response?.data?.detail || err.message || 'Prediction failed');
+      }
+      setPredictLoading(false);
     }
   };
 
