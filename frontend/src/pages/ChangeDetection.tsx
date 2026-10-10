@@ -109,7 +109,6 @@ const ChangeDetection = () => {
               {captures.map((capture, idx) => {
                 const isSelected = selectedIndices.includes(idx);
                 const isFirst = selectedIndices.indexOf(idx) === 0;
-                const isSecond = selectedIndices.indexOf(idx) === 1;
                 
                 return (
                   <div 
