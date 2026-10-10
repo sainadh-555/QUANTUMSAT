@@ -1,8 +1,21 @@
 import { useState, useRef } from 'react';
 import { trainQuantum, predictImage } from '../services/api';
 import { Atom, Play, Loader2, AlertCircle, CheckCircle2, AlertTriangle, Upload, Crosshair } from 'lucide-react';
+import { useCapture } from '../context/CaptureContext';
 
 const SAMPLE_IMG = import.meta.env.BASE_URL + 'sample.svg';
+
+const dataURLtoFile = (dataurl: string, filename: string) => {
+  const arr = dataurl.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while(n--){
+      u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, {type:mime});
+}
 
 const QuantumLab = () => {
   const [qubits] = useState(4);
@@ -14,8 +27,10 @@ const QuantumLab = () => {
   const [error, setError] = useState<string | null>(null);
   
   // Prediction state
+  const { captures } = useCapture();
+  const initialImg = captures.length > 0 ? captures[captures.length - 1].imageBase64 : SAMPLE_IMG;
   const [predictFile, setPredictFile] = useState<File | null>(null);
-  const [predictUrl, setPredictUrl] = useState<string>(SAMPLE_IMG);
+  const [predictUrl, setPredictUrl] = useState<string>(initialImg);
   const [predictResult, setPredictResult] = useState<any>(null);
   const [predictLoading, setPredictLoading] = useState(false);
   const [predictError, setPredictError] = useState<string | null>(null);
@@ -56,6 +71,9 @@ const QuantumLab = () => {
       const fd = new FormData();
       if (predictFile) {
         fd.append('image', predictFile);
+      } else if (predictUrl !== SAMPLE_IMG && predictUrl.startsWith('data:image')) {
+        const file = dataURLtoFile(predictUrl, 'capture.jpg');
+        fd.append('image', file);
       } else {
         const response = await fetch(SAMPLE_IMG);
         const blob = await response.blob();
@@ -266,13 +284,48 @@ const QuantumLab = () => {
               ))}
             </div>
 
-            <div className="bg-background border border-border rounded p-4">
-              <h4 className="text-xs font-semibold text-textMuted mb-2">Circuit Metadata</h4>
-              <div className="text-xs space-y-1 text-textMuted">
-                <div>Feature Map: <span className="text-textMain">{result.circuit?.feature_map}</span></div>
-                <div>Repetitions: <span className="text-textMain">{result.circuit?.reps}</span></div>
-                <div>Entanglement: <span className="text-textMain">{result.circuit?.entanglement}</span></div>
-                <div>Backend: <span className="text-textMain">Aer Simulator (local, noiseless)</span></div>
+            {/* Visual Circuit representation */}
+            <div className="bg-[#0B0F19] border border-border rounded p-6 overflow-x-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h4 className="text-xs font-semibold text-accentCyan uppercase tracking-widest font-mono">Quantum Circuit Architecture</h4>
+                <div className="text-[10px] text-textMuted font-mono">ZZFeatureMap · {result.circuit?.reps} Reps · {result.circuit?.entanglement} Entanglement</div>
+              </div>
+              
+              <div className="flex flex-col gap-4 font-mono text-[10px] min-w-max">
+                {Array.from({ length: result.circuit?.width || 4 }).map((_, q) => (
+                  <div key={q} className="flex items-center">
+                    <div className="text-textMuted w-12 text-right pr-4 font-bold text-accent">q_{q} |0⟩</div>
+                    
+                    <div className="h-px bg-border w-6"></div>
+                    <div className="w-8 h-8 bg-surface border border-accent flex items-center justify-center text-accent font-bold rounded shadow-lg shadow-accent/20">H</div>
+                    
+                    {Array.from({ length: result.circuit?.reps || 1 }).map((_, r) => (
+                      <div key={r} className="flex items-center">
+                         <div className="h-px bg-border w-6"></div>
+                         <div className="w-8 h-8 bg-primary/10 border border-primary text-primary flex items-center justify-center font-bold rounded">Rz</div>
+                         
+                         <div className="h-px bg-border w-6"></div>
+                         {result.circuit?.entanglement === 'linear' ? (
+                           <div className="w-8 h-8 bg-surface border border-accentCyan text-accentCyan flex items-center justify-center rounded-full font-bold shadow-lg shadow-accentCyan/10">
+                             {q % 2 === 0 ? '•' : '⊕'}
+                           </div>
+                         ) : result.circuit?.entanglement === 'full' ? (
+                           <div className="w-8 h-8 bg-surface border border-accentCyan text-accentCyan flex items-center justify-center rounded-full font-bold shadow-lg shadow-accentCyan/10">
+                             ⊕
+                           </div>
+                         ) : (
+                           <div className="w-8 h-8 bg-surface border border-border text-textMuted flex items-center justify-center rounded font-bold">I</div>
+                         )}
+                      </div>
+                    ))}
+                    
+                    <div className="h-px bg-border w-6"></div>
+                    <div className="w-8 h-8 bg-surface border border-border flex items-center justify-center rounded">
+                      <Atom className="w-4 h-4 text-textMuted" />
+                    </div>
+                    <div className="h-px bg-border flex-1 min-w-[24px]"></div>
+                  </div>
+                ))}
               </div>
             </div>
 
