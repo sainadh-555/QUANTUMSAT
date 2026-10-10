@@ -665,3 +665,37 @@ def copernicus_image(
         return {"status": "success", "image_b64": img_b64}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/classify/gemini")
+async def classify_gemini(
+    image: UploadFile = File(...),
+    api_key: str = Form(...)
+):
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        
+        img_bytes = await image.read()
+        img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        prompt = """
+        You are an expert Earth Observation AI assistant.
+        Analyze this satellite image and provide the following:
+        1. Primary Land Cover Classification (e.g. Forest, Urban, Agriculture, Coastal/Ocean, Highway, etc.)
+        2. A brief 2-sentence descriptive analysis of the geography and features visible in the image.
+        """
+        
+        response = model.generate_content([prompt, img])
+        
+        return {
+            "status": "success",
+            "prediction": "Gemini AI Analysis",
+            "confidence": "High",
+            "probabilities": None,
+            "extracted_features": [],
+            "message": response.text
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gemini API Error: {str(e)}")

@@ -101,6 +101,36 @@ const QuantumLab = () => {
     setPredictLoading(false);
   };
 
+  const handleGeminiPredict = async () => {
+    const apiKey = localStorage.getItem('gemini_api_key');
+    if (!apiKey) {
+      setPredictError('Please enter your Gemini API Key in the top right header to use Gemini AI Analysis.');
+      return;
+    }
+    setPredictLoading(true); setPredictError(null); setPredictResult(null);
+    try {
+      const fd = new FormData();
+      if (predictFile) {
+        fd.append('image', predictFile);
+      } else if (predictUrl !== SAMPLE_IMG && predictUrl.startsWith('data:image')) {
+        const file = dataURLtoFile(predictUrl, 'capture.jpg');
+        fd.append('image', file);
+      } else {
+        const response = await fetch(SAMPLE_IMG);
+        const blob = await response.blob();
+        fd.append('image', blob, 'sample.svg');
+      }
+      fd.append('api_key', apiKey);
+      
+      const { predictGemini } = await import('../services/api');
+      const res = await predictGemini(fd);
+      setPredictResult(res);
+    } catch (e: any) {
+      setPredictError(e?.response?.data?.detail || e.message || 'Gemini Analysis failed');
+    }
+    setPredictLoading(false);
+  };
+
   return (
     <div className="flex h-full min-h-0">
       {/* Config */}
@@ -210,10 +240,14 @@ const QuantumLab = () => {
                 You must train a quantum model first before predicting.
               </p>
               
-              <div className="flex items-center gap-3 w-full">
+              <div className="flex flex-wrap items-center gap-3 w-full">
                 <button onClick={handlePredict} disabled={predictLoading} className="flex items-center gap-2 px-4 py-2 bg-accent/20 text-accent border border-accent/30 rounded text-sm font-medium hover:bg-accent/30 transition-colors disabled:opacity-50">
                   {predictLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crosshair className="w-4 h-4" />}
                   {predictLoading ? 'Analysing…' : 'Predict Class'}
+                </button>
+                <button onClick={handleGeminiPredict} disabled={predictLoading} className="flex items-center gap-2 px-4 py-2 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded text-sm font-medium hover:bg-indigo-500/30 transition-colors disabled:opacity-50">
+                  {predictLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Atom className="w-4 h-4" />}
+                  Gemini AI Analysis
                 </button>
                 {predictResult && (
                   <div className="flex items-center gap-2 px-4 py-2 bg-surfaceHover border border-border rounded text-sm font-bold text-accentCyan">
@@ -224,6 +258,12 @@ const QuantumLab = () => {
               
               {predictError && (
                 <div className="mt-3 text-xs text-danger flex items-center gap-1.5"><AlertCircle className="w-3.5 h-3.5" /> {predictError}</div>
+              )}
+              
+              {predictResult?.message && predictResult.prediction === "Gemini AI Analysis" && (
+                <div className="w-full mt-4 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-sm text-textMain leading-relaxed whitespace-pre-wrap">
+                  {predictResult.message}
+                </div>
               )}
               
               {predictResult?.probabilities && (

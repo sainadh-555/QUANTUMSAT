@@ -21,6 +21,9 @@ export const predictImage = (data: FormData) =>
 export const trainQuantum = (data: FormData) =>
   api.post('/classify/quantum', data, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
 
+export const predictGemini = (data: FormData) =>
+  api.post('/classify/gemini', data, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
+
 // ── Change Detection ──
 export const compareImages = (data: FormData) =>
   api.post('/change-detection/compare', data, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);

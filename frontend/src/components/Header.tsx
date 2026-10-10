@@ -80,6 +80,20 @@ const Header = ({ toggleCopilot, copilotOpen }: HeaderProps) => {
           <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full ring-2 ring-surface"></span>
         </button>
 
+        {/* Gemini API Key */}
+        <div className="relative group">
+          <input
+            type="password"
+            placeholder="Gemini API Key..."
+            className="bg-background border border-border rounded px-2.5 py-1 text-xs text-textMain focus:outline-none focus:border-primary w-36 focus:w-48 transition-all placeholder:text-textMuted"
+            defaultValue={localStorage.getItem('gemini_api_key') || ''}
+            onChange={(e) => localStorage.setItem('gemini_api_key', e.target.value)}
+          />
+          <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-border rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 p-2 pointer-events-none text-[10px] text-textMuted">
+            Required for Advanced Gemini AI Vision Analysis. Keys are stored locally in your browser.
+          </div>
+        </div>
+
         {/* Copilot toggle */}
         <button
           onClick={toggleCopilot}
