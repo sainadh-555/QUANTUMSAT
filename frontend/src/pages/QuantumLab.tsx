@@ -27,7 +27,7 @@ const QuantumLab = () => {
   const [error, setError] = useState<string | null>(null);
   
   // Prediction state
-  const { captures } = useCapture();
+  const { captures, sharedRegion } = useCapture();
   const initialImg = captures.length > 0 ? captures[captures.length - 1].imageBase64 : SAMPLE_IMG;
   const [predictFile, setPredictFile] = useState<File | null>(null);
   const [predictUrl, setPredictUrl] = useState<string>(initialImg);
@@ -227,6 +227,31 @@ const QuantumLab = () => {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+              
+              {predictResult?.extracted_features && (
+                <div className="flex gap-2 w-full mt-4">
+                  <div className="flex-1 bg-background border border-border rounded p-3">
+                    <h4 className="text-[9px] font-semibold text-textMuted uppercase tracking-widest mb-2">Image Features</h4>
+                    <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                      <div><span className="text-danger">R:</span> {predictResult.extracted_features[0]}</div>
+                      <div><span className="text-success">G:</span> {predictResult.extracted_features[1]}</div>
+                      <div><span className="text-primary">B:</span> {predictResult.extracted_features[2]}</div>
+                      <div><span className="text-textMuted">σG:</span> {predictResult.extracted_features[3]}</div>
+                    </div>
+                  </div>
+                  
+                  {predictUrl !== SAMPLE_IMG && sharedRegion && (
+                    <div className="flex-1 bg-background border border-border rounded p-3">
+                      <h4 className="text-[9px] font-semibold text-textMuted uppercase tracking-widest mb-2">Copernicus Metadata</h4>
+                      <div className="text-[9px] font-mono text-textMuted space-y-1">
+                        <div className="truncate" title={sharedRegion.bbox}>BBOX: {sharedRegion.bbox.substring(0, 15)}...</div>
+                        <div>Date: {sharedRegion.dateStart}</div>
+                        <div>Cloud: &lt;{sharedRegion.cloudCover}%</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
