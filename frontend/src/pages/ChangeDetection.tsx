@@ -258,7 +258,7 @@ const ChangeDetection = () => {
               </div>
 
               {/* Statistics */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 <div className="bg-background border border-border rounded p-3 text-center">
                   <div className="text-lg font-bold text-textMain">{result.statistics.change_percentage}%</div>
                   <div className="text-[10px] text-textMuted uppercase tracking-wider">Changed Area</div>
@@ -270,6 +270,28 @@ const ChangeDetection = () => {
                 <div className="bg-background border border-border rounded p-3 text-center">
                   <div className="text-lg font-bold text-textMain">{result.statistics.total_patches}</div>
                   <div className="text-[10px] text-textMuted uppercase tracking-wider">Total Patches</div>
+                </div>
+                <div className="bg-background border border-border rounded p-3 text-center">
+                  <div className="text-lg font-bold text-accentCyan uppercase">{result.statistics.method_used === 'statistical fallback' ? 'Classical' : result.statistics.method_used}</div>
+                  <div className="text-[10px] text-textMuted uppercase tracking-wider">Pipeline Used</div>
+                </div>
+              </div>
+
+              {/* Metadata */}
+              <div className="flex gap-2 w-full mt-2">
+                <div className="flex-1 bg-background border border-border rounded p-3">
+                  <h4 className="text-[9px] font-semibold text-textMuted uppercase tracking-widest mb-2">Copernicus Metadata (Time 1)</h4>
+                  <div className="text-[9px] font-mono text-textMuted space-y-1">
+                    <div className="truncate" title={img1.bounds.join(',')}>BBOX: {img1.bounds[0].toFixed(2)}, {img1.bounds[1].toFixed(2)}, {img1.bounds[2].toFixed(2)}, {img1.bounds[3].toFixed(2)}</div>
+                    <div>Date: {img1.date}</div>
+                  </div>
+                </div>
+                <div className="flex-1 bg-background border border-border rounded p-3">
+                  <h4 className="text-[9px] font-semibold text-textMuted uppercase tracking-widest mb-2">Copernicus Metadata (Time 2)</h4>
+                  <div className="text-[9px] font-mono text-textMuted space-y-1">
+                    <div className="truncate" title={img2.bounds.join(',')}>BBOX: {img2.bounds[0].toFixed(2)}, {img2.bounds[1].toFixed(2)}, {img2.bounds[2].toFixed(2)}, {img2.bounds[3].toFixed(2)}</div>
+                    <div>Date: {img2.date}</div>
+                  </div>
                 </div>
               </div>
 

@@ -71,14 +71,13 @@ const EarthAnalysis = () => {
         )}
         
         {activeTab === 'ocean' && (
-          <div className="absolute inset-0 overflow-hidden">
-            <ChangeDetection />
+          <div className="absolute inset-0 overflow-y-auto">
+            <LandCover />
           </div>
         )}
 
         {activeTab === 'change' && (
           <div className="absolute inset-0 overflow-hidden">
-            {/* ChangeDetection already handles its own scroll container */}
             <ChangeDetection />
           </div>
         )}

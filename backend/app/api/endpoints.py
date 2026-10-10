@@ -227,6 +227,7 @@ async def classify_predict(
                 "prediction": predicted_class,
                 "confidence": "N/A",
                 "probabilities": probs,
+                "extracted_features": [round(float(f), 2) for f in features[0]],
                 "message": "Prediction successful using active Quantum SVM."
             }
         else:
@@ -244,6 +245,7 @@ async def classify_predict(
                 "prediction": predicted_class,
                 "confidence": "N/A",
                 "probabilities": probs,
+                "extracted_features": [round(float(f), 2) for f in features[0]],
                 "message": "Prediction successful using active classical model."
             }
 
@@ -383,9 +385,17 @@ async def change_detection_compare(
         magnitudes = np.linalg.norm(diff_features, axis=1)
         total_patches = len(magnitudes)
 
+        # Hybrid Auto-Decide logic for Change Detection
+        if method == "auto":
+            # If the image patches are small enough, use Quantum, else Statistical
+            if total_patches <= 256:
+                method = "quantum"
+            else:
+                method = "statistical"
+
         if method == "quantum":
-            if total_patches > 500:
-                raise HTTPException(status_code=400, detail="Images too large for unbatched quantum simulator. Try smaller images or statistical method.")
+            if total_patches > 512:
+                raise HTTPException(status_code=400, detail="Images too large for unbatched quantum simulator. Try smaller images, or use Statistical / Auto mode.")
             
             # Semi-supervised pseudo-labelling
             # We assume top 10% magnitude are changed (1) and bottom 40% are unchanged (0)
