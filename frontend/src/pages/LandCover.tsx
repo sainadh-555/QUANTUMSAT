@@ -50,6 +50,7 @@ const LandCover = () => {
       try {
         const fd = new FormData();
         fd.append('image', file);
+        fd.append('classes', classes.join(','));
         if (result?.model_type?.includes('Quantum')) {
           fd.append('use_quantum', 'true');
         }
@@ -229,6 +230,13 @@ const LandCover = () => {
               className="max-w-[70%] max-h-[70%] object-contain shadow-2xl ring-1 ring-border rounded-lg"
               style={{ imageRendering: 'pixelated' }}
             />
+            
+            {predictError && (
+              <div className="absolute bottom-10 bg-danger/10 border border-danger p-6 rounded-xl shadow-2xl max-w-md animate-in slide-in-from-bottom-4 z-[3000]">
+                <div className="text-xs text-danger uppercase tracking-widest mb-1 font-semibold flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> Prediction Error</div>
+                <div className="text-sm text-textMain">{predictError}</div>
+              </div>
+            )}
             
             {predictResult && (
               <div className="absolute bottom-10 bg-surface/95 backdrop-blur border border-accentCyan/30 p-6 rounded-xl shadow-2xl max-w-md animate-in slide-in-from-bottom-4">
