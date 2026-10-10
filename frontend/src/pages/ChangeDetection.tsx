@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { compareImages } from '../services/api';
-import { Loader2, AlertCircle, CheckCircle2, AlertTriangle, ArrowRightLeft, Camera, Calendar, Play } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle2, AlertTriangle, ArrowRightLeft, Camera, Calendar, Play, UploadCloud } from 'lucide-react';
 import { useCapture } from '../context/CaptureContext';
 import { Link } from 'react-router-dom';
 
@@ -65,6 +65,26 @@ const ChangeDetection = () => {
     setLoading(false);
   };
 
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const newId = `capture_${Date.now()}`;
+          // Generate a fake bounds for uploaded images
+          addCapture({
+            id: newId,
+            date: file.name.replace('.jpg', '').replace('.png', '') || new Date().toISOString().split('T')[0],
+            imageBase64: event.target.result as string,
+            bounds: [80.4, 16.3, 80.5, 16.4]
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const img1 = selectedIndices.length > 0 ? captures[selectedIndices[0]] : null;
   const img2 = selectedIndices.length > 1 ? captures[selectedIndices[1]] : null;
 
@@ -75,11 +95,18 @@ const ChangeDetection = () => {
           <ArrowRightLeft className="w-5 h-5 text-accentCyan" />
           Multi-Temporal Change Detection
         </h2>
-        {captures.length > 0 && (
-          <div className="text-xs text-textMuted bg-surface border border-border px-3 py-1.5 rounded">
-            {captures.length} Snapshots Available
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          <label className="cursor-pointer px-4 py-1.5 bg-surface border border-border rounded text-xs text-textMuted hover:text-textMain hover:border-primary/50 transition-colors flex items-center gap-2">
+            <UploadCloud className="w-4 h-4" />
+            Upload Custom Snapshot
+            <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+          </label>
+          {captures.length > 0 && (
+            <div className="text-xs text-textMuted bg-surface border border-border px-3 py-1.5 rounded">
+              {captures.length} Snapshots Available
+            </div>
+          )}
+        </div>
       </div>
 
       {captures.length === 0 ? (
