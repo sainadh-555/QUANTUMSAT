@@ -25,7 +25,7 @@ const EarthExplorer = () => {
   const [searchError, setSearchError] = useState('');
   
   const [imgLoading, setImgLoading] = useState(false);
-  const [activeBounds, setActiveBounds] = useState<L.LatLngBoundsExpression>([[-90, -180], [90, 180]]);
+  const [activeBounds, setActiveBounds] = useState<L.LatLngBoundsExpression | null>(null);
   
   const [panelOpen, setPanelOpen] = useState(true);
 
@@ -34,10 +34,12 @@ const EarthExplorer = () => {
     setSharedRegion({ bbox, dateStart, dateEnd, cloudCover });
   }, [bbox, dateStart, dateEnd, cloudCover, setSharedRegion]);
 
-  const MapUpdater = ({ bounds }: { bounds: L.LatLngBoundsExpression }) => {
+  const MapUpdater = ({ bounds }: { bounds: L.LatLngBoundsExpression | null }) => {
     const map = useMap();
     useEffect(() => {
-      map.fitBounds(bounds);
+      if (bounds) {
+        map.fitBounds(bounds);
+      }
     }, [bounds, map]);
 
     useEffect(() => {
@@ -155,7 +157,7 @@ const EarthExplorer = () => {
             attribution='Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
             url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
           />
-          {selectedImage && <ImageOverlay url={selectedImage} bounds={activeBounds} />}
+          {selectedImage && activeBounds && <ImageOverlay url={selectedImage} bounds={activeBounds} />}
           {bbox && !selectedImage && (
             <Rectangle 
               bounds={[
