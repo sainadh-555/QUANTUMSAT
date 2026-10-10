@@ -27,3 +27,9 @@ class ClassicalModels:
         preds = model.predict(X_test)
         prediction_time = time.time() - start_time
         return preds, prediction_time
+
+    def predict_proba(self, model, X_test):
+        start_time = time.time()
+        probs = model.predict_proba(X_test)
+        prediction_time = time.time() - start_time
+        return probs, prediction_time

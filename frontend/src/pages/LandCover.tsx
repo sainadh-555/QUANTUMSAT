@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { trainClassical, predictImage, getSystemStatus } from '../services/api';
+import { trainClassical, trainQuantum, predictImage, getSystemStatus } from '../services/api';
 import { Play, Loader2, AlertCircle, Settings2, BarChart2, Upload, Crosshair, ChevronLeft, Map } from 'lucide-react';
 import { useCapture } from '../context/CaptureContext';
 
@@ -52,10 +52,26 @@ const LandCover = () => {
     setLoading(true); setError(null); setResult(null);
     try {
       const fd = new FormData();
-      fd.append('model_type', modelType);
       fd.append('classes', classes.join(','));
-      fd.append('samples_per_class', String(samples));
-      const res = await trainClassical(fd);
+      
+      let actualModelType = modelType;
+      // Auto logic: use Quantum if samples are small, else Classical
+      if (modelType === 'Auto') {
+        actualModelType = samples <= 30 ? 'Quantum' : 'RBF-SVM';
+      }
+
+      let res;
+      if (actualModelType === 'Quantum') {
+        fd.append('samples_per_class', String(Math.min(samples, 30)));
+        fd.append('qubits', '4');
+        fd.append('reps', '1');
+        fd.append('entanglement', 'linear');
+        res = await trainQuantum(fd);
+      } else {
+        fd.append('model_type', actualModelType);
+        fd.append('samples_per_class', String(samples));
+        res = await trainClassical(fd);
+      }
       setResult(res);
     } catch (e: any) {
       setError(e?.response?.data?.detail || e.message || 'Request failed');
@@ -69,12 +85,25 @@ const LandCover = () => {
       const fd = new FormData();
       if (predictFile) {
         fd.append('image', predictFile);
+      } else if (predictUrl !== SAMPLE_IMG && predictUrl.startsWith('data:image')) {
+        const arr = predictUrl.split(',');
+        const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while(n--){ u8arr[n] = bstr.charCodeAt(n); }
+        const file = new File([u8arr], 'capture.jpg', {type:mime});
+        fd.append('image', file);
       } else {
-        // If sample, we need to fetch it as a blob first
         const response = await fetch(SAMPLE_IMG);
         const blob = await response.blob();
         fd.append('image', blob, 'sample.svg');
       }
+      
+      if (result?.model_type?.includes('Quantum')) {
+        fd.append('use_quantum', 'true');
+      }
+
       const res = await predictImage(fd);
       setPredictResult(res);
     } catch (e: any) {
@@ -126,6 +155,8 @@ const LandCover = () => {
         <select value={modelType} onChange={e => setModelType(e.target.value)} className="bg-background border border-border rounded px-2.5 py-1.5 text-sm text-textMain mb-4 focus:outline-none focus:border-primary">
           <option value="RBF-SVM">SVM (RBF Kernel)</option>
           <option value="Random Forest">Random Forest</option>
+          <option value="Quantum">Quantum SVM (Qiskit)</option>
+          <option value="Auto">Auto-Decide (Hybrid)</option>
         </select>
 
         <label className="text-xs text-textMuted mb-1.5">Samples per class</label>
@@ -189,6 +220,23 @@ const LandCover = () => {
                 <div className="text-xs text-textMuted uppercase tracking-widest mb-1 font-semibold">Classification Result</div>
                 <div className="text-3xl font-bold text-accentCyan mb-2">{predictResult.prediction}</div>
                 <div className="text-sm text-textMain">{predictResult.message}</div>
+                
+                {predictResult.probabilities && (
+                  <div className="w-full mt-4 bg-background border border-border rounded p-3">
+                    <h4 className="text-[9px] font-semibold text-textMuted uppercase tracking-widest mb-2">Class Probabilities</h4>
+                    <div className="space-y-1.5">
+                      {Object.entries(predictResult.probabilities).map(([cls, prob]: [string, any]) => (
+                        <div key={cls} className="flex items-center gap-2">
+                          <div className="w-20 text-[9px] font-medium text-textMain truncate">{cls}</div>
+                          <div className="flex-1 h-1 bg-surface rounded-full overflow-hidden">
+                            <div className="h-full bg-accentCyan transition-all duration-1000" style={{ width: `${prob * 100}%` }}></div>
+                          </div>
+                          <div className="w-8 text-right text-[9px] font-mono text-accentCyan">{(prob * 100).toFixed(0)}%</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {predictError && (

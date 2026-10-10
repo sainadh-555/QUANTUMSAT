@@ -233,10 +233,17 @@ async def classify_predict(
             cm = ClassicalModels()
             pred_idx, _ = cm.predict(_latest_model, features)
             predicted_class = _latest_model_classes.get(pred_idx[0], "Unknown")
+            
+            probs = None
+            if hasattr(_latest_model, 'predict_proba'):
+                prob_array, _ = cm.predict_proba(_latest_model, features)
+                probs = { _latest_model_classes.get(i, f"Class {i}"): round(float(p), 4) for i, p in enumerate(prob_array[0]) }
+
             return {
                 "status": "success",
                 "prediction": predicted_class,
                 "confidence": "N/A",
+                "probabilities": probs,
                 "message": "Prediction successful using active classical model."
             }
 
