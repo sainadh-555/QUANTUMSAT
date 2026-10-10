@@ -42,15 +42,10 @@ class CopernicusService:
             "Content-Type": "application/json"
         }
         
-        from dateutil import parser
-        try:
-            ts = parser.parse(time_start, dayfirst=True)
-            te = parser.parse(time_end, dayfirst=True)
-            iso_start = ts.strftime("%Y-%m-%dT00:00:00Z")
-            iso_end = te.strftime("%Y-%m-%dT23:59:59Z")
-        except:
-            iso_start = f"{time_start}T00:00:00Z"
-            iso_end = f"{time_end}T23:59:59Z"
+        # The frontend now strictly enforces YYYY-MM-DD.
+        # Avoid dateutil here because dayfirst=True can flip YYYY-MM-DD (e.g. 2025-05-10 -> Oct 5).
+        iso_start = f"{time_start}T00:00:00Z"
+        iso_end = f"{time_end}T23:59:59Z"
 
         payload = {
             "bbox": bbox,
@@ -105,15 +100,8 @@ class CopernicusService:
         }
         """
         
-        from dateutil import parser
-        try:
-            ts = parser.parse(date_start, dayfirst=True)
-            te = parser.parse(date_end, dayfirst=True)
-            iso_start = ts.strftime("%Y-%m-%dT00:00:00Z")
-            iso_end = te.strftime("%Y-%m-%dT23:59:59Z")
-        except:
-            iso_start = f"{date_start}T00:00:00Z"
-            iso_end = f"{date_end}T23:59:59Z"
+        iso_start = f"{date_start}T00:00:00Z"
+        iso_end = f"{date_end}T23:59:59Z"
             
         payload = {
             "input": {
