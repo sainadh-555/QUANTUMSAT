@@ -216,10 +216,17 @@ async def classify_predict(
             scaled_features = _latest_quantum_scaler.transform(features)
             pred_idx, _ = _latest_quantum_model.predict(scaled_features)
             predicted_class = _latest_quantum_classes.get(pred_idx[0], "Unknown")
+            
+            probs = None
+            if hasattr(_latest_quantum_model, 'predict_proba'):
+                prob_array, _ = _latest_quantum_model.predict_proba(scaled_features)
+                probs = { _latest_quantum_classes.get(i, f"Class {i}"): round(float(p), 4) for i, p in enumerate(prob_array[0]) }
+
             return {
                 "status": "success",
                 "prediction": predicted_class,
                 "confidence": "N/A",
+                "probabilities": probs,
                 "message": "Prediction successful using active Quantum SVM."
             }
         else:

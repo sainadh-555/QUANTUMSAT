@@ -197,7 +197,7 @@ const QuantumLab = () => {
                 You must train a quantum model first before predicting.
               </p>
               
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 w-full">
                 <button onClick={handlePredict} disabled={predictLoading} className="flex items-center gap-2 px-4 py-2 bg-accent/20 text-accent border border-accent/30 rounded text-sm font-medium hover:bg-accent/30 transition-colors disabled:opacity-50">
                   {predictLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crosshair className="w-4 h-4" />}
                   {predictLoading ? 'Analysing…' : 'Predict Class'}
@@ -211,6 +211,23 @@ const QuantumLab = () => {
               
               {predictError && (
                 <div className="mt-3 text-xs text-danger flex items-center gap-1.5"><AlertCircle className="w-3.5 h-3.5" /> {predictError}</div>
+              )}
+              
+              {predictResult?.probabilities && (
+                <div className="w-full mt-6 bg-background border border-border rounded p-4">
+                  <h4 className="text-[10px] font-semibold text-textMuted uppercase tracking-widest mb-3">Quantum State Collapse Probabilities</h4>
+                  <div className="space-y-2">
+                    {Object.entries(predictResult.probabilities).map(([cls, prob]: [string, any]) => (
+                      <div key={cls} className="flex items-center gap-3">
+                        <div className="w-24 text-[10px] font-medium text-textMain">{cls}</div>
+                        <div className="flex-1 h-1.5 bg-surface rounded-full overflow-hidden">
+                          <div className="h-full bg-accentCyan transition-all duration-1000" style={{ width: `${prob * 100}%` }}></div>
+                        </div>
+                        <div className="w-10 text-right text-[10px] font-mono text-accentCyan">{(prob * 100).toFixed(1)}%</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>
