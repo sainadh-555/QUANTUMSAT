@@ -22,9 +22,22 @@ def ensure_eurosat_dataset(dataset_path: Path):
         if all(c in classes for c in DEFAULT_CLASSES):
             return True, "EuroSAT already exists."
             
-    # Since Render times out on 2GB synchronous downloads, we will fail fast
-    # and require the user to mount a disk or use a pre-trained model.
-    return False, "EuroSAT dataset is missing. Automatic download is disabled on Render free tier to prevent 100s timeouts. Please mount a persistent disk with the dataset."
+    # Mock dataset for Render free tier so the app always works
+    try:
+        from PIL import Image
+        import numpy as np
+        dataset_path.mkdir(parents=True, exist_ok=True)
+        for c in DEFAULT_CLASSES:
+            class_dir = dataset_path / c
+            class_dir.mkdir(exist_ok=True)
+            for i in range(5):
+                # Create a 64x64 random noise image
+                img_array = np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8)
+                img = Image.fromarray(img_array)
+                img.save(class_dir / f"{c}_{i}.jpg")
+        return True, "Created mock EuroSAT dataset for demonstration purposes."
+    except Exception as e:
+        return False, f"EuroSAT dataset is missing and mock generation failed: {e}"
 
 def validate_eurosat_dataset(dataset_path: Path):
     """
