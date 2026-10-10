@@ -28,6 +28,7 @@ const TerraCopilot = ({ onClose }: { onClose: () => void }) => {
     },
   ]);
   const [loading, setLoading] = useState(false);
+  const [execMode, setExecMode] = useState<'AUTO' | 'AI MODE' | 'QUANTUM MODE'>('AUTO');
 
   const handleSend = async () => {
     const q = query.trim();
@@ -38,7 +39,7 @@ const TerraCopilot = ({ onClose }: { onClose: () => void }) => {
     setLoading(true);
 
     try {
-      const res = await askCopilot(q);
+      const res = await askCopilot(q, execMode);
       setMessages(prev => [
         ...prev,
         {
@@ -140,6 +141,23 @@ const TerraCopilot = ({ onClose }: { onClose: () => void }) => {
           >
             <Send className="w-4 h-4" />
           </button>
+        </div>
+        
+        {/* Execution Mode Selector */}
+        <div className="flex items-center justify-between mt-3 bg-background border border-border rounded p-1">
+          {(['AUTO', 'AI MODE', 'QUANTUM MODE'] as const).map(mode => (
+            <button
+              key={mode}
+              onClick={() => setExecMode(mode)}
+              className={`flex-1 text-[9px] font-bold tracking-wider py-1.5 rounded transition-colors ${
+                execMode === mode 
+                  ? 'bg-primary/20 text-primary' 
+                  : 'text-textMuted hover:text-textMain'
+              }`}
+            >
+              {mode}
+            </button>
+          ))}
         </div>
       </div>
     </div>

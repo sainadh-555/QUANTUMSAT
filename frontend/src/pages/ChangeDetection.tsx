@@ -26,7 +26,7 @@ const ChangeDetection = () => {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [sliderPos, setSliderPos] = useState(50);
-  const [method, setMethod] = useState<'statistical' | 'quantum'>('statistical');
+  const [method, setMethod] = useState<'auto' | 'statistical' | 'quantum'>('auto');
 
   const handleSelect = (index: number) => {
     if (selectedIndices.includes(index)) {
@@ -149,12 +149,23 @@ const ChangeDetection = () => {
                   <input 
                     type="radio" 
                     name="method" 
+                    value="auto" 
+                    checked={method === 'auto'} 
+                    onChange={() => setMethod('auto')}
+                    className="accent-primary" 
+                  />
+                  <span className={method === 'auto' ? 'text-textMain font-medium' : 'text-textMuted'}>AUTO (Recommended)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input 
+                    type="radio" 
+                    name="method" 
                     value="statistical" 
                     checked={method === 'statistical'} 
                     onChange={() => setMethod('statistical')}
                     className="accent-primary" 
                   />
-                  <span className={method === 'statistical' ? 'text-textMain font-medium' : 'text-textMuted'}>Statistical Baseline</span>
+                  <span className={method === 'statistical' ? 'text-textMain font-medium' : 'text-textMuted'}>AI Mode (Classical)</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer text-sm">
                   <input 
@@ -165,7 +176,7 @@ const ChangeDetection = () => {
                     onChange={() => setMethod('quantum')}
                     className="accent-primary" 
                   />
-                  <span className={method === 'quantum' ? 'text-textMain font-medium' : 'text-textMuted'}>Quantum Kernel (Pseudo-labeling)</span>
+                  <span className={method === 'quantum' ? 'text-textMain font-medium' : 'text-textMuted'}>Quantum Mode</span>
                 </label>
               </div>
             </div>

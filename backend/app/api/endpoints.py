@@ -448,6 +448,7 @@ async def change_detection_compare(
 @router.post("/copilot/ask")
 async def copilot_ask(
     question: str = Form(...),
+    execMode: str = Form("AUTO"),
     context: str = Form(None)
 ):
     """
@@ -456,10 +457,16 @@ async def copilot_ask(
     """
     q = question.lower().strip()
     
+    prefix = ""
+    if execMode == "QUANTUM MODE":
+        prefix = "[Quantum Execution Path Requested]\n"
+    elif execMode == "AI MODE":
+        prefix = "[Classical AI Execution Path Requested]\n"
+    
     if context:
         if any(kw in q for kw in ["predict", "result", "change", "what is this", "explain", "here"]):
             return {
-                "answer": f"Based on your current workspace context: {context}\n\nThis explains the results you are seeing.",
+                "answer": f"{prefix}Based on your current workspace context: {context}\n\nThis explains the results you are seeing.",
                 "source": "ui_context"
             }
 

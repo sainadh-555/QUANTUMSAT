@@ -26,9 +26,10 @@ export const compareImages = (data: FormData) =>
   api.post('/change-detection/compare', data, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
 
 // ── Copilot ──
-export const askCopilot = (question: string, context?: string) => {
+export const askCopilot = (question: string, execMode: string = 'AUTO', context?: string) => {
   const fd = new FormData();
   fd.append('question', question);
+  fd.append('execMode', execMode);
   if (context) fd.append('context', context);
   return api.post('/copilot/ask', fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
 };
