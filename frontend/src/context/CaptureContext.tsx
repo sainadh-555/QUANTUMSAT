@@ -8,17 +8,32 @@ export interface CapturedImage {
   bounds: [number, number, number, number]; // [W, S, E, N]
 }
 
+export interface SharedRegion {
+  bbox: string;
+  dateStart: string;
+  dateEnd: string;
+  cloudCover: number;
+}
+
 interface CaptureContextType {
   captures: CapturedImage[];
   addCapture: (capture: CapturedImage) => void;
   removeCapture: (id: string) => void;
   clearCaptures: () => void;
+  sharedRegion: SharedRegion;
+  setSharedRegion: (region: SharedRegion) => void;
 }
 
 const CaptureContext = createContext<CaptureContextType | undefined>(undefined);
 
 export const CaptureProvider = ({ children }: { children: ReactNode }) => {
   const [captures, setCaptures] = useState<CapturedImage[]>([]);
+  const [sharedRegion, setSharedRegion] = useState<SharedRegion>({
+    bbox: '14.4,40.8,14.5,40.9',
+    dateStart: '2023-05-01',
+    dateEnd: '2023-05-31',
+    cloudCover: 20
+  });
 
   const addCapture = (capture: CapturedImage) => {
     setCaptures((prev) => [...prev, capture]);
@@ -33,7 +48,7 @@ export const CaptureProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <CaptureContext.Provider value={{ captures, addCapture, removeCapture, clearCaptures }}>
+    <CaptureContext.Provider value={{ captures, addCapture, removeCapture, clearCaptures, sharedRegion, setSharedRegion }}>
       {children}
     </CaptureContext.Provider>
   );

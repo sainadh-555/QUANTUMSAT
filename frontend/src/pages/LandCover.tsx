@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { trainClassical, predictImage, getSystemStatus } from '../services/api';
 import { Play, Loader2, AlertCircle, Settings2, BarChart2, Upload, Crosshair, ChevronLeft, Map } from 'lucide-react';
+import { useCapture } from '../context/CaptureContext';
 
 const SAMPLE_IMG = import.meta.env.BASE_URL + 'sample.svg';
 
@@ -20,8 +21,13 @@ const LandCover = () => {
   }, []);
   
   // Prediction state
+  const { captures } = useCapture();
   const [predictFile, setPredictFile] = useState<File | null>(null);
-  const [predictUrl, setPredictUrl] = useState<string>(SAMPLE_IMG);
+  
+  // Use the latest capture if available, otherwise fallback to sample
+  const initialImg = captures.length > 0 ? captures[captures.length - 1].imageBase64 : SAMPLE_IMG;
+  const [predictUrl, setPredictUrl] = useState<string>(initialImg);
+  
   const [predictResult, setPredictResult] = useState<any>(null);
   const [predictLoading, setPredictLoading] = useState(false);
   const [predictError, setPredictError] = useState<string | null>(null);

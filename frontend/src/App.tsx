@@ -43,7 +43,7 @@ function AppContent() {
           </main>
           
           {/* Slide-out Copilot Panel */}
-          <aside className={`absolute top-0 right-0 h-full w-96 bg-surface border-l border-border shadow-2xl transition-transform duration-300 ease-in-out z-50 ${copilotOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+          <aside className={`transition-all duration-300 ease-in-out bg-surface border-l border-border z-10 flex-shrink-0 ${copilotOpen ? 'w-96' : 'w-0 overflow-hidden border-none'}`}>
             {copilotOpen && <TerraCopilot onClose={() => setCopilotOpen(false)} />}
           </aside>
         </div>

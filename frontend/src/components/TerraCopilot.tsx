@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { askCopilot } from '../services/api';
 import { X, Send, Bot, Loader2, ExternalLink } from 'lucide-react';
+import { useCapture } from '../context/CaptureContext';
 
 interface Message {
   role: 'user' | 'ai';
@@ -30,6 +31,8 @@ const TerraCopilot = ({ onClose }: { onClose: () => void }) => {
   const [loading, setLoading] = useState(false);
   const [execMode, setExecMode] = useState<'AUTO' | 'AI MODE' | 'QUANTUM MODE'>('AUTO');
 
+  const { sharedRegion } = useCapture();
+
   const handleSend = async () => {
     const q = query.trim();
     if (!q || loading) return;
@@ -39,7 +42,8 @@ const TerraCopilot = ({ onClose }: { onClose: () => void }) => {
     setLoading(true);
 
     try {
-      const res = await askCopilot(q, execMode);
+      const contextStr = JSON.stringify({ region: sharedRegion });
+      const res = await askCopilot(q, execMode, contextStr);
       setMessages(prev => [
         ...prev,
         {
