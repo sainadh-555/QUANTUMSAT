@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { trainClassical, trainQuantum, predictImage, getSystemStatus } from '../services/api';
-import { Play, Loader2, AlertCircle, Settings2, BarChart2, Upload, Crosshair, ChevronLeft, Map } from 'lucide-react';
+import { Play, Loader2, AlertCircle, Settings2, BarChart2, Upload, Crosshair, ChevronLeft, Map, AlertTriangle } from 'lucide-react';
 import { useCapture } from '../context/CaptureContext';
 
 const SAMPLE_IMG = import.meta.env.BASE_URL + 'sample.svg';
