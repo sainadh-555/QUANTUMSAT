@@ -57,6 +57,7 @@ const Applications = () => {
       fd.append('image1', t1File);
       fd.append('image2', t2File);
       fd.append('method', 'auto');
+      fd.append('use_quantum', 'true');
       
       const res = await compareImages(fd);
       setResult(res);
@@ -188,22 +189,24 @@ const Applications = () => {
               ) : (
                 <div className="flex gap-6 items-start animate-in slide-in-from-bottom-4">
                   <div className="w-48 shrink-0">
-                    <img src={`data:image/png;base64,${result.diff_image}`} alt="Difference" className="w-full rounded-lg shadow-lg border border-border" />
+                    <img src={`data:image/png;base64,${result.change_map_b64}`} alt="Difference" className="w-full rounded-lg shadow-lg border border-border" style={{ imageRendering: 'pixelated' }} />
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-textMain mb-2 flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-accentCyan"></span> Analysis Complete
                     </h3>
-                    <div className="text-xs text-textMuted mb-4">{result.message}</div>
+                    <div className="text-xs text-textMuted mb-4 leading-relaxed">{result.warning}</div>
                     
                     <div className="flex gap-4">
                       <div className="bg-surface border border-border rounded-lg p-3 w-32">
                         <div className="text-[10px] text-textMuted uppercase tracking-wider mb-1">Impact Area</div>
-                        <div className="text-xl font-bold text-danger">{result.change_percentage.toFixed(1)}%</div>
+                        <div className="text-xl font-bold text-danger">{result.statistics.change_percentage.toFixed(1)}%</div>
                       </div>
-                      <div className="bg-surface border border-border rounded-lg p-3 w-32">
-                        <div className="text-[10px] text-textMuted uppercase tracking-wider mb-1">Pipeline</div>
-                        <div className="text-xl font-bold text-primary">{result.pipeline}</div>
+                      <div className="bg-surface border border-border rounded-lg p-3 w-48">
+                        <div className="text-[10px] text-textMuted uppercase tracking-wider mb-1">Pipeline Engine</div>
+                        <div className="text-[11px] font-bold text-primary truncate">
+                          {result.statistics.method_used === 'quantum' ? 'Quantum SVM (ZZFeatureMap)' : 'Statistical Baseline'}
+                        </div>
                       </div>
                     </div>
                   </div>

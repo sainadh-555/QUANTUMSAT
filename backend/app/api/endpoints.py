@@ -361,7 +361,8 @@ def classify_quantum(
 async def change_detection_compare(
     image1: UploadFile = File(...),
     image2: UploadFile = File(...),
-    method: str = Form("statistical")
+    method: str = Form("statistical"),
+    use_quantum: bool = Form(False)
 ):
     """
     Compares two uploaded images and produces a change mask.
@@ -389,14 +390,15 @@ async def change_detection_compare(
 
         # Hybrid Auto-Decide logic for Change Detection
         if method == "auto":
-            # If the image patches are small enough, use Quantum, else Statistical
-            if total_patches <= 256:
+            if use_quantum:
+                method = "quantum"
+            elif total_patches <= 256:
                 method = "quantum"
             else:
                 method = "statistical"
 
         if method == "quantum":
-            if total_patches > 512:
+            if total_patches > 4096:
                 raise HTTPException(status_code=400, detail="Images too large for unbatched quantum simulator. Try smaller images, or use Statistical / Auto mode.")
             
             # Semi-supervised pseudo-labelling
