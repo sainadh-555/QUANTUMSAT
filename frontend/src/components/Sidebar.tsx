@@ -5,7 +5,7 @@ import { Globe, Map, GitCompareArrows, Atom, BarChart3, Settings, ChevronLeft, C
 const links = [
   { to: '/', icon: Globe, label: 'Earth Explorer' },
   { to: '/earth-analysis', icon: Map, label: 'Earth Analysis' },
-  { to: '/applications', icon: GitCompareArrows, label: 'Applications' },
+  { to: '/applications', icon: GitCompareArrows, label: 'Earth Modules' },
   { to: '/quantum-lab', icon: Atom, label: 'Quantum Mode' },
   { to: '/results', icon: BarChart3, label: 'Results & History' },
   { to: '/settings', icon: Settings, label: 'Settings' },

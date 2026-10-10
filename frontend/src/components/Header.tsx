@@ -14,7 +14,7 @@ const getPageTitle = (pathname: string) => {
   switch (pathname) {
     case '/': return 'Earth Explorer';
     case '/land-cover': return 'Earth Analysis';
-    case '/change-detection': return 'Applications';
+    case '/applications': return 'Earth Modules';
     case '/quantum-lab': return 'Quantum Mode';
     case '/results': return 'Results & History';
     case '/settings': return 'Settings';
