@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { getSystemStatus, searchCopernicus, fetchCopernicusImage } from '../services/api';
-import { Layers, Info, AlertTriangle, Upload, MapPin, Search, Cloud, Calendar, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Layers, Info, AlertTriangle, Upload, MapPin, Search, Cloud, Calendar, Image as ImageIcon, Loader2, Camera, Check } from 'lucide-react';
 import { MapContainer, TileLayer, ImageOverlay, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import { useCapture } from '../context/CaptureContext';
 
 const SAMPLE_IMG = import.meta.env.BASE_URL + 'sample.svg';
 
@@ -13,6 +14,9 @@ const EarthExplorer = () => {
   // Use the sample SVG as the default loaded image
   const [selectedImage, setSelectedImage] = useState<string>(SAMPLE_IMG);
   const [imageFile, setImageFile] = useState<File | null>(null);
+
+  const { captures, addCapture } = useCapture();
+  const [captureFeedback, setCaptureFeedback] = useState(false);
 
   // Copernicus Search State
   const [bbox, setBbox] = useState('14.4,40.8,14.5,40.9');
@@ -54,6 +58,22 @@ const EarthExplorer = () => {
       // Uploaded images are not inherently georeferenced, put them on a dummy bounds
       setActiveBounds([[0, 0], [1, 1]]);
     }
+  };
+
+  const handleCapture = () => {
+    if (isSample || !selectedImage.startsWith('data:image')) return;
+    const dateStr = imageFile?.name.replace('Sentinel2_', '').replace('.jpg', '') || new Date().toISOString().split('T')[0];
+    const newId = `capture_${Date.now()}`;
+    const [w, s, e, n] = bbox.split(',').map(Number);
+    
+    addCapture({
+      id: newId,
+      date: dateStr,
+      imageBase64: selectedImage,
+      bounds: [w, s, e, n]
+    });
+    setCaptureFeedback(true);
+    setTimeout(() => setCaptureFeedback(false), 2000);
   };
 
   const handleSearch = async () => {
@@ -112,6 +132,21 @@ const EarthExplorer = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {captures.length > 0 && (
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-accentCyan/10 text-accentCyan border border-accentCyan/20 rounded font-medium">
+              <Camera className="w-3.5 h-3.5" />
+              {captures.length} {captures.length === 1 ? 'Snapshot' : 'Snapshots'} Captured
+            </div>
+          )}
+          {!isSample && selectedImage.startsWith('data:image') && (
+            <button 
+              onClick={handleCapture}
+              className="flex items-center gap-1.5 px-3 py-1 bg-primary/20 text-primary border border-primary/40 rounded hover:bg-primary/30 cursor-pointer transition-colors"
+            >
+              {captureFeedback ? <Check className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />} 
+              {captureFeedback ? 'Captured!' : 'Take Photo'}
+            </button>
+          )}
           <label className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded hover:bg-primary/20 cursor-pointer transition-colors">
             <Upload className="w-3.5 h-3.5" /> Upload Image
             <input type="file" accept="image/jpeg, image/png" onChange={handleImageUpload} className="hidden" />

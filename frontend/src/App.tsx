@@ -8,6 +8,7 @@ import QuantumLab from './pages/QuantumLab';
 import ChangeDetection from './pages/ChangeDetection';
 import Results from './pages/Results';
 import TerraCopilot from './components/TerraCopilot';
+import { CaptureProvider } from './context/CaptureContext';
 
 function AppContent() {
   const [copilotOpen, setCopilotOpen] = useState(false);
@@ -54,7 +55,9 @@ function AppContent() {
 function App() {
   return (
     <Router basename="/QUANTUMSAT">
-      <AppContent />
+      <CaptureProvider>
+        <AppContent />
+      </CaptureProvider>
     </Router>
   );
 }
