@@ -142,7 +142,7 @@ const EarthExplorer = () => {
               className="flex items-center gap-1.5 px-3 py-1 bg-primary text-white border border-primary/20 rounded font-medium hover:bg-primary/90 transition-colors relative"
             >
               {captureFeedback ? <Check className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
-              {captureFeedback ? 'Extracted!' : 'Extract Snapshot'}
+              {captureFeedback ? 'Photo Taken!' : 'Take Photo'}
             </button>
           )}
           {captures.length > 0 && (
