@@ -29,7 +29,7 @@ const CaptureContext = createContext<CaptureContextType | undefined>(undefined);
 export const CaptureProvider = ({ children }: { children: ReactNode }) => {
   const [captures, setCaptures] = useState<CapturedImage[]>([]);
   const [sharedRegion, setSharedRegion] = useState<SharedRegion>({
-    bbox: '14.4,40.8,14.5,40.9',
+    bbox: '80.35,16.25,80.45,16.35', // Guntur bounds
     dateStart: '2023-05-01',
     dateEnd: '2023-05-31',
     cloudCover: 20

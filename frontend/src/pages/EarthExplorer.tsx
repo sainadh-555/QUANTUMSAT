@@ -152,10 +152,10 @@ const EarthExplorer = () => {
           </div>
         )}
 
-        <MapContainer center={[40.85, 14.45]} zoom={11} className="w-full h-full z-0" style={{ background: '#0B0F19' }}>
+        <MapContainer center={[16.306, 80.436]} zoom={12} className="w-full h-full z-0" style={{ background: '#0B0F19' }}>
           <TileLayer
-            attribution='Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
-            url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+            attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           />
           {selectedImage && activeBounds && <ImageOverlay url={selectedImage} bounds={activeBounds} />}
           {bbox && !selectedImage && (
