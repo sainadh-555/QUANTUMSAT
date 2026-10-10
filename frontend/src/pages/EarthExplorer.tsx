@@ -76,13 +76,25 @@ const EarthExplorer = () => {
     setTimeout(() => setCaptureFeedback(false), 2000);
   };
 
+  const formatDate = (dateStr: string) => {
+    // If it's already YYYY-MM-DD, return it
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+    // If it's DD-MM-YYYY or MM-DD-YYYY, convert it
+    const parts = dateStr.split('-');
+    if (parts.length === 3 && parts[2].length === 4) {
+      // Assuming DD-MM-YYYY
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return dateStr;
+  };
+
   const handleSearch = async () => {
     setSearchLoading(true); setSearchError(''); setSearchResults([]);
     try {
       const fd = new FormData();
       fd.append('bbox', bbox);
-      fd.append('date_start', dateStart);
-      fd.append('date_end', dateEnd);
+      fd.append('date_start', formatDate(dateStart));
+      fd.append('date_end', formatDate(dateEnd));
       fd.append('max_cloud_cover', String(cloudCover));
       const res = await searchCopernicus(fd);
       setSearchResults(res.results || []);
