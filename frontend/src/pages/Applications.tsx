@@ -8,7 +8,7 @@ const apps = [
     description: 'Detect inundated areas and assess flood damage using SAR and optical imagery.',
     icon: Droplets,
     color: 'bg-blue-500',
-    available: false,
+    available: true,
   },
   {
     id: 'urban',
@@ -16,7 +16,7 @@ const apps = [
     description: 'Track city expansion, infrastructure development, and urban sprawl over time.',
     icon: Building2,
     color: 'bg-purple-500',
-    available: false,
+    available: true,
   },
   {
     id: 'agriculture',
@@ -24,7 +24,7 @@ const apps = [
     description: 'Monitor crop health, yield estimation, and seasonal vegetation changes.',
     icon: Leaf,
     color: 'bg-green-500',
-    available: false,
+    available: true,
   },
   {
     id: 'water',
@@ -32,7 +32,7 @@ const apps = [
     description: 'Analyze reservoir levels, coastline changes, and water quality indicators.',
     icon: Grid,
     color: 'bg-cyan-500',
-    available: false,
+    available: true,
   },
   {
     id: 'forest',
@@ -40,7 +40,7 @@ const apps = [
     description: 'Track deforestation, logging activities, and general forest health.',
     icon: Trees,
     color: 'bg-emerald-600',
-    available: false,
+    available: true,
   },
   {
     id: 'landcover',
@@ -83,7 +83,7 @@ const Applications = () => {
                 </p>
                 
                 <button
-                  onClick={() => app.available && navigate('/earth-analysis')}
+                  onClick={() => navigate('/earth-analysis', { state: { app: app.id } })}
                   disabled={!app.available}
                   className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     app.available 

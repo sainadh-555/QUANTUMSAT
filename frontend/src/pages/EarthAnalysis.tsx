@@ -1,10 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Map, Droplets, GitCompareArrows } from 'lucide-react';
 import LandCover from './LandCover';
 import ChangeDetection from './ChangeDetection';
 
 const EarthAnalysis = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<'land' | 'ocean' | 'change'>('land');
+
+  useEffect(() => {
+    if (location.state?.app) {
+      const app = location.state.app;
+      if (['flood', 'urban', 'forest'].includes(app)) setActiveTab('change');
+      else if (app === 'water') setActiveTab('ocean');
+      else setActiveTab('land');
+    }
+  }, [location.state]);
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -60,14 +71,8 @@ const EarthAnalysis = () => {
         )}
         
         {activeTab === 'ocean' && (
-          <div className="absolute inset-0 overflow-y-auto p-6">
-            <div className="flex flex-col items-center justify-center h-64 bg-surface border border-border border-dashed rounded-lg text-center p-6">
-              <Droplets className="w-12 h-12 text-textMuted mb-4 opacity-50" />
-              <h3 className="text-lg font-medium text-textMain mb-2">Ocean & Water Analysis</h3>
-              <p className="text-sm text-textMuted max-w-md">
-                Water-body extent and coastal shoreline change models are currently under development. Please check back in a future update.
-              </p>
-            </div>
+          <div className="absolute inset-0 overflow-hidden">
+            <ChangeDetection />
           </div>
         )}
 
