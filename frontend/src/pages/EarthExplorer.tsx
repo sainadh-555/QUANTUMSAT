@@ -136,6 +136,15 @@ const EarthExplorer = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {selectedImage && (
+            <button 
+              onClick={handleCapture}
+              className="flex items-center gap-1.5 px-3 py-1 bg-primary text-white border border-primary/20 rounded font-medium hover:bg-primary/90 transition-colors relative"
+            >
+              {captureFeedback ? <Check className="w-3.5 h-3.5" /> : <Camera className="w-3.5 h-3.5" />}
+              {captureFeedback ? 'Extracted!' : 'Extract Snapshot'}
+            </button>
+          )}
           {captures.length > 0 && (
             <div className="flex items-center gap-1.5 px-3 py-1 bg-accentCyan/10 text-accentCyan border border-accentCyan/20 rounded font-medium">
               <Camera className="w-3.5 h-3.5" />

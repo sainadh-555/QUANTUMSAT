@@ -1,6 +1,19 @@
 import React, { useState, useRef } from 'react';
 import { Droplets, Building2, Trees, Leaf, Map as MapIcon, ArrowRight, UploadCloud, Loader2, AlertTriangle } from 'lucide-react';
 import { compareImages } from '../services/api';
+import { useCapture } from '../context/CaptureContext';
+
+const dataURLtoFile = (dataurl: string, filename: string) => {
+  const arr = dataurl.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while(n--){
+      u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, {type:mime});
+}
 
 const apps = [
   { id: 'flood', module: 'MODULE #1', badge: 'Disaster Watch', title: 'Flood Impact Intelligence', icon: Droplets, color: 'text-blue-500', bg: 'bg-blue-50' },
@@ -13,6 +26,7 @@ const apps = [
 ];
 
 const Applications = () => {
+  const { captures } = useCapture();
   const [activeApp, setActiveApp] = useState(apps[0]);
   
   // Image Upload State
@@ -133,7 +147,25 @@ const Applications = () => {
                 <h3 className="text-xs font-semibold text-textMuted flex items-center gap-2">
                   <UploadCloud className="w-4 h-4" /> REFERENCE SATELLITE SCENE (T1)
                 </h3>
-                <button onClick={() => t1Ref.current?.click()} className="text-xs text-primary hover:underline">Upload PNG/JPG</button>
+                <div className="flex items-center gap-3">
+                  {captures.length > 0 && (
+                    <select 
+                      className="text-xs bg-surfaceHover border border-border rounded px-2 py-1 text-textMuted cursor-pointer focus:outline-none focus:border-primary"
+                      onChange={(e) => {
+                        if (!e.target.value) return;
+                        const capture = captures.find(c => c.id === e.target.value);
+                        if (capture) {
+                          setT1Url(capture.imageBase64);
+                          setT1File(dataURLtoFile(capture.imageBase64, `t1_${capture.id}.jpg`));
+                        }
+                      }}
+                    >
+                      <option value="">Load Map Snapshot...</option>
+                      {captures.map((c, i) => <option key={c.id} value={c.id}>Snapshot #{i+1} ({c.date})</option>)}
+                    </select>
+                  )}
+                  <button onClick={() => t1Ref.current?.click()} className="text-xs text-primary hover:underline font-medium">Upload PNG/JPG</button>
+                </div>
                 <input ref={t1Ref} type="file" accept="image/*" onChange={handleT1Upload} className="hidden" />
               </div>
               <div className="flex-1 min-h-[200px] flex items-center justify-center bg-[#0B0F19] relative group">
@@ -151,7 +183,25 @@ const Applications = () => {
                 <h3 className="text-xs font-semibold text-textMuted flex items-center gap-2">
                   <UploadCloud className="w-4 h-4" /> TARGET ANALYSIS SCENE (T2)
                 </h3>
-                <button onClick={() => t2Ref.current?.click()} className="text-xs text-primary hover:underline">Upload PNG/JPG</button>
+                <div className="flex items-center gap-3">
+                  {captures.length > 0 && (
+                    <select 
+                      className="text-xs bg-surfaceHover border border-border rounded px-2 py-1 text-textMuted cursor-pointer focus:outline-none focus:border-primary"
+                      onChange={(e) => {
+                        if (!e.target.value) return;
+                        const capture = captures.find(c => c.id === e.target.value);
+                        if (capture) {
+                          setT2Url(capture.imageBase64);
+                          setT2File(dataURLtoFile(capture.imageBase64, `t2_${capture.id}.jpg`));
+                        }
+                      }}
+                    >
+                      <option value="">Load Map Snapshot...</option>
+                      {captures.map((c, i) => <option key={c.id} value={c.id}>Snapshot #{i+1} ({c.date})</option>)}
+                    </select>
+                  )}
+                  <button onClick={() => t2Ref.current?.click()} className="text-xs text-primary hover:underline font-medium">Upload PNG/JPG</button>
+                </div>
                 <input ref={t2Ref} type="file" accept="image/*" onChange={handleT2Upload} className="hidden" />
               </div>
               <div className="flex-1 min-h-[200px] flex items-center justify-center bg-[#0B0F19] relative group">
