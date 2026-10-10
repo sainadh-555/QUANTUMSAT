@@ -243,10 +243,10 @@ const LandCover = () => {
                     <div className="flex-1 bg-background border border-border rounded p-3">
                       <h4 className="text-[9px] font-semibold text-textMuted uppercase tracking-widest mb-2">Image Features</h4>
                       <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
-                        <div><span className="text-danger">R:</span> {predictResult.extracted_features[0]}</div>
-                        <div><span className="text-success">G:</span> {predictResult.extracted_features[1]}</div>
-                        <div><span className="text-primary">B:</span> {predictResult.extracted_features[2]}</div>
-                        <div><span className="text-textMuted">σG:</span> {predictResult.extracted_features[3]}</div>
+                        <div><span className="text-danger">R:</span> {predictResult.extracted_features[0].toFixed(1)}</div>
+                        <div><span className="text-success">G:</span> {predictResult.extracted_features[1].toFixed(1)}</div>
+                        <div><span className="text-primary">B:</span> {predictResult.extracted_features[2].toFixed(1)}</div>
+                        <div><span className="text-textMuted">GLI:</span> {predictResult.extracted_features[3].toFixed(3)}</div>
                       </div>
                     </div>
                   )}

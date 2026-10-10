@@ -19,9 +19,13 @@ def extract_features(images):
             mean_r = np.mean(r)
             mean_g = np.mean(g)
             mean_b = np.mean(b)
-            std_g = np.std(g)
             
-            features.append([mean_r, mean_g, mean_b, std_g])
+            # Green Leaf Index (GLI) - a standard Earth Observation index for RGB images
+            # Formula: (2*G - R - B) / (2*G + R + B)
+            denominator = (2.0 * mean_g + mean_r + mean_b)
+            gli = (2.0 * mean_g - mean_r - mean_b) / denominator if denominator > 0 else 0.0
+            
+            features.append([mean_r, mean_g, mean_b, gli])
         else:
             # Fallback for grayscale or other formats
             features.append([0.0, 0.0, 0.0, 0.0])
